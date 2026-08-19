@@ -32,7 +32,7 @@ startBtn.addEventListener("click", async () => {
     });
 
 
-    status.textContent = "Translation Ready";
+    status.textContent = "Listening";
 });
 
 
