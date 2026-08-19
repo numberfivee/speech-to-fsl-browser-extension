@@ -34,10 +34,18 @@ function createTranslatorWidget() {
         <div class="fsl-content">
 
             <div class="fsl-section">
-                <h3>Speech</h3>
+                <h3>Recognized Speech</h3>
 
                 <p id="recognized-speech">
                     Waiting for speech...
+                </p>
+            </div>
+
+            <div class="fsl-section">
+                <h3>Processed Text</h3>
+
+                <p id="processed-text">
+                    Waiting for processing...
                 </p>
             </div>
 
@@ -74,17 +82,17 @@ function removeTranslatorWidget() {
 
 function startSpeechRecognition() {
 
-    // Check browser support
     const SpeechRecognition =
         window.SpeechRecognition ||
         window.webkitSpeechRecognition;
+
 
     if (!SpeechRecognition) {
 
         document.getElementById(
             "recognized-speech"
         ).textContent =
-            "Speech recognition is not supported in this browser.";
+            "Speech recognition is not supported.";
 
         return;
     }
@@ -92,13 +100,8 @@ function startSpeechRecognition() {
 
     recognition = new SpeechRecognition();
 
-    // Language for Filipino speech
     recognition.lang = "fil-PH";
-
-    // Continue listening
     recognition.continuous = true;
-
-    // Show partial results while speaking
     recognition.interimResults = true;
 
 
@@ -108,15 +111,16 @@ function startSpeechRecognition() {
             document.getElementById("recognized-speech");
 
         if (speechElement) {
-            speechElement.textContent =
-                "Listening...";
+            speechElement.textContent = "Listening...";
         }
     };
 
 
     recognition.onresult = (event) => {
 
-        let transcript = "";
+        let interimTranscript = "";
+        let finalTranscript = "";
+
 
         for (
             let i = event.resultIndex;
@@ -124,17 +128,59 @@ function startSpeechRecognition() {
             i++
         ) {
 
-            transcript +=
+            const transcript =
                 event.results[i][0].transcript;
+
+
+            if (event.results[i].isFinal) {
+
+                finalTranscript += transcript;
+
+            } else {
+
+                interimTranscript += transcript;
+            }
         }
 
 
         const speechElement =
             document.getElementById("recognized-speech");
 
+
         if (speechElement) {
+
             speechElement.textContent =
-                transcript;
+                finalTranscript || interimTranscript;
+        }
+
+
+        // Process only final speech results
+        if (finalTranscript) {
+
+            const processedWords =
+                processText(finalTranscript);
+
+
+            const processedTextElement =
+                document.getElementById("processed-text");
+
+
+            if (processedTextElement) {
+
+                processedTextElement.textContent =
+                    processedWords.join(" ");
+            }
+
+
+            console.log(
+                "Original:",
+                finalTranscript
+            );
+
+            console.log(
+                "Processed:",
+                processedWords
+            );
         }
     };
 
@@ -146,11 +192,11 @@ function startSpeechRecognition() {
             event.error
         );
 
-
         const speechElement =
             document.getElementById("recognized-speech");
 
         if (speechElement) {
+
             speechElement.textContent =
                 "Error: " + event.error;
         }

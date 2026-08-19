@@ -11,6 +11,7 @@ startBtn.addEventListener("click", async () => {
     });
 
 
+    // Inject widget styles
     await chrome.scripting.insertCSS({
         target: {
             tabId: tab.id
@@ -19,6 +20,16 @@ startBtn.addEventListener("click", async () => {
     });
 
 
+    // Inject translator first
+    await chrome.scripting.executeScript({
+        target: {
+            tabId: tab.id
+        },
+        files: ["translator.js"]
+    });
+
+
+    // Inject main content script
     await chrome.scripting.executeScript({
         target: {
             tabId: tab.id
@@ -27,6 +38,7 @@ startBtn.addEventListener("click", async () => {
     });
 
 
+    // Start translation
     chrome.tabs.sendMessage(tab.id, {
         action: "startTranslation"
     });

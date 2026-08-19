@@ -71,7 +71,8 @@
 }
 
 
-#recognized-speech {
+#recognized-speech,
+#processed-text {
     background: #f3f3f3;
 
     padding: 10px;
