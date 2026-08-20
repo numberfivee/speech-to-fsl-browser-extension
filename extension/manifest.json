@@ -12,5 +12,17 @@
     "permissions": [
         "activeTab",
         "scripting"
+    ],
+
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "dictionary.json",
+                "assets/gifs/*"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
     ]
 }

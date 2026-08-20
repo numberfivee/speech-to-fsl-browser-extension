@@ -1,7 +1,10 @@
 chrome.runtime.onMessage.addListener((message) => {
     if (message.action === "startTranslation") {
         createTranslatorWidget();
-        startSpeechRecognition();
+
+        loadDictionary().then(() => {
+            startSpeechRecognition();
+        });
     }
 
     if (message.action === "stopTranslation") {
@@ -9,7 +12,6 @@ chrome.runtime.onMessage.addListener((message) => {
         removeTranslatorWidget();
     }
 });
-
 
 let recognition = null;
 
@@ -55,6 +57,10 @@ function createTranslatorWidget() {
                 <div id="fsl-animation">
                     Waiting for translation...
                 </div>
+
+                <div id="translation-details">
+                    No translation yet.
+                </div>
             </div>
 
         </div>
@@ -81,22 +87,16 @@ function removeTranslatorWidget() {
 
 
 function startSpeechRecognition() {
-
     const SpeechRecognition =
         window.SpeechRecognition ||
         window.webkitSpeechRecognition;
 
-
     if (!SpeechRecognition) {
-
-        document.getElementById(
-            "recognized-speech"
-        ).textContent =
+        document.getElementById("recognized-speech").textContent =
             "Speech recognition is not supported.";
 
         return;
     }
-
 
     recognition = new SpeechRecognition();
 
@@ -106,7 +106,6 @@ function startSpeechRecognition() {
 
 
     recognition.onstart = () => {
-
         const speechElement =
             document.getElementById("recognized-speech");
 
@@ -117,27 +116,20 @@ function startSpeechRecognition() {
 
 
     recognition.onresult = (event) => {
-
         let interimTranscript = "";
         let finalTranscript = "";
-
 
         for (
             let i = event.resultIndex;
             i < event.results.length;
             i++
         ) {
-
             const transcript =
                 event.results[i][0].transcript;
 
-
             if (event.results[i].isFinal) {
-
                 finalTranscript += transcript;
-
             } else {
-
                 interimTranscript += transcript;
             }
         }
@@ -146,9 +138,7 @@ function startSpeechRecognition() {
         const speechElement =
             document.getElementById("recognized-speech");
 
-
         if (speechElement) {
-
             speechElement.textContent =
                 finalTranscript || interimTranscript;
         }
@@ -157,6 +147,7 @@ function startSpeechRecognition() {
         // Process only final speech results
         if (finalTranscript) {
 
+            // Rule-based NLP
             const processedWords =
                 processText(finalTranscript);
 
@@ -164,11 +155,39 @@ function startSpeechRecognition() {
             const processedTextElement =
                 document.getElementById("processed-text");
 
-
             if (processedTextElement) {
-
                 processedTextElement.textContent =
                     processedWords.join(" ");
+            }
+
+
+            // Map processed words to FSL dictionary
+            const translations =
+                translateWords(processedWords);
+
+
+            const translationDetails =
+                document.getElementById("translation-details");
+
+            if (translationDetails) {
+                translationDetails.innerHTML = "";
+
+                translations.forEach((item) => {
+                    const translationItem =
+                        document.createElement("p");
+
+                    if (item.found) {
+                        translationItem.textContent =
+                            `✓ ${item.word} → Sign found`;
+                    } else {
+                        translationItem.textContent =
+                            `✗ ${item.word} → Sign not found`;
+                    }
+
+                    translationDetails.appendChild(
+                        translationItem
+                    );
+                });
             }
 
 
@@ -181,12 +200,16 @@ function startSpeechRecognition() {
                 "Processed:",
                 processedWords
             );
+
+            console.log(
+                "Translations:",
+                translations
+            );
         }
     };
 
 
     recognition.onerror = (event) => {
-
         console.error(
             "Speech recognition error:",
             event.error
@@ -196,7 +219,6 @@ function startSpeechRecognition() {
             document.getElementById("recognized-speech");
 
         if (speechElement) {
-
             speechElement.textContent =
                 "Error: " + event.error;
         }
@@ -204,7 +226,6 @@ function startSpeechRecognition() {
 
 
     recognition.onend = () => {
-
         console.log(
             "Speech recognition stopped."
         );
@@ -216,11 +237,8 @@ function startSpeechRecognition() {
 
 
 function stopSpeechRecognition() {
-
     if (recognition) {
-
         recognition.stop();
-
         recognition = null;
     }
 }

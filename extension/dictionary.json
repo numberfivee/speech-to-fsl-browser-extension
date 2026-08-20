@@ -1,0 +1,41 @@
+{
+    "ako": {
+        "animation": "assets/gifs/ako.gif"
+    },
+
+    "ikaw": {
+        "animation": "assets/gifs/ikaw.gif"
+    },
+
+    "siya": {
+        "animation": "assets/gifs/siya.gif"
+    },
+
+    "estudyante": {
+        "animation": "assets/gifs/estudyante.gif"
+    },
+
+    "guro": {
+        "animation": "assets/gifs/guro.gif"
+    },
+
+    "paaralan": {
+        "animation": "assets/gifs/paaralan.gif"
+    },
+
+    "magandang": {
+        "animation": "assets/gifs/magandang.gif"
+    },
+
+    "umaga": {
+        "animation": "assets/gifs/umaga.gif"
+    },
+
+    "salamat": {
+        "animation": "assets/gifs/salamat.gif"
+    },
+
+    "kumusta": {
+        "animation": "assets/gifs/kumusta.gif"
+    }
+}

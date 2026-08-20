@@ -98,3 +98,13 @@
 
     text-align: center;
 }
+
+
+#translation-details {
+    margin-top: 10px;
+}
+
+#translation-details p {
+    margin: 5px 0;
+    font-size: 13px;
+}
