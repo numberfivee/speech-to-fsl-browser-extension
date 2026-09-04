@@ -1,0 +1,78 @@
+{
+    "magandang umaga": {
+        "dataset_label": "GOOD MORNING",
+        "dataset_id": 0,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "magandang hapon": {
+        "dataset_label": "GOOD AFTERNOON",
+        "dataset_id": 1,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "magandang gabi": {
+        "dataset_label": "GOOD EVENING",
+        "dataset_id": 2,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "hello": {
+        "dataset_label": "HELLO",
+        "dataset_id": 3,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "kumusta": {
+        "dataset_label": "HOW ARE YOU",
+        "dataset_id": 4,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "kumusta ka": {
+        "dataset_label": "HOW ARE YOU",
+        "dataset_id": 4,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "ayos lang ako": {
+        "dataset_label": "IM FINE",
+        "dataset_id": 5,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "nice to meet you": {
+        "dataset_label": "NICE TO MEET YOU",
+        "dataset_id": 6,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "salamat": {
+        "dataset_label": "THANK YOU",
+        "dataset_id": 7,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "maraming salamat": {
+        "dataset_label": "THANK YOU",
+        "dataset_id": 7,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "walang anuman": {
+        "dataset_label": "YOURE WELCOME",
+        "dataset_id": 8,
+        "category": "GREETING",
+        "source": "FSL-105"
+    }
+}

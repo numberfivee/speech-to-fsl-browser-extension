@@ -2,7 +2,10 @@ chrome.runtime.onMessage.addListener((message) => {
     if (message.action === "startTranslation") {
         createTranslatorWidget();
 
-        loadDictionary().then(() => {
+        Promise.all([
+            loadDictionary(),
+            loadPhraseMappings()
+        ]).then(() => {
             startSpeechRecognition();
         });
     }
@@ -147,64 +150,102 @@ function startSpeechRecognition() {
         // Process only final speech results
         if (finalTranscript) {
 
-            // Rule-based NLP
-            const processedWords =
-                processText(finalTranscript);
+            // STEP 1: Check for a complete phrase match
+            const phraseMatch =
+                findPhraseMapping(finalTranscript);
 
 
             const processedTextElement =
                 document.getElementById("processed-text");
 
-            if (processedTextElement) {
-                processedTextElement.textContent =
-                    processedWords.join(" ");
-            }
-
-
-            // Map processed words to FSL dictionary
-            const translations =
-                translateWords(processedWords);
-
-
             const translationDetails =
-                document.getElementById("translation-details");
+                document.getElementById(
+                    "translation-details"
+                );
 
-            if (translationDetails) {
-                translationDetails.innerHTML = "";
 
-                translations.forEach((item) => {
-                    const translationItem =
-                        document.createElement("p");
+            // If a phrase match is found
+            if (phraseMatch) {
 
-                    if (item.found) {
-                        translationItem.textContent =
-                            `✓ ${item.word} → Sign found`;
-                    } else {
-                        translationItem.textContent =
-                            `✗ ${item.word} → Sign not found`;
-                    }
+                if (processedTextElement) {
+                    processedTextElement.textContent =
+                        phraseMatch.phrase;
+                }
 
-                    translationDetails.appendChild(
-                        translationItem
-                    );
-                });
+
+                if (translationDetails) {
+
+                    translationDetails.innerHTML = `
+                        <p><strong>✓ Phrase Match Found</strong></p>
+                        <p>Input: ${phraseMatch.phrase}</p>
+                        <p>FSL-105 Label: ${phraseMatch.dataset_label}</p>
+                        <p>Dataset ID: ${phraseMatch.dataset_id}</p>
+                        <p>Category: ${phraseMatch.category}</p>
+                        <p>Source: ${phraseMatch.source}</p>
+                    `;
+                }
+
+
+                console.log(
+                    "Phrase Match:",
+                    phraseMatch
+                );
+
+            } else {
+
+                // STEP 2: No phrase match
+                // Use existing word-level NLP
+
+                const processedWords =
+                    processText(finalTranscript);
+
+
+                if (processedTextElement) {
+
+                    processedTextElement.textContent =
+                        processedWords.join(" ");
+                }
+
+
+                const translations =
+                    translateWords(processedWords);
+
+
+                if (translationDetails) {
+
+                    translationDetails.innerHTML = "";
+
+
+                    translations.forEach((item) => {
+
+                        const translationItem =
+                            document.createElement("p");
+
+
+                        if (item.found) {
+
+                            translationItem.textContent =
+                                `✓ ${item.word} → Sign found`;
+
+                        } else {
+
+                            translationItem.textContent =
+                                `✗ ${item.word} → Sign not found`;
+                        }
+
+
+                        translationDetails.appendChild(
+                            translationItem
+                        );
+                    });
+                }
+
+
+                console.log(
+                    "No phrase match. Word translations:",
+                    translations
+                );
             }
-
-
-            console.log(
-                "Original:",
-                finalTranscript
-            );
-
-            console.log(
-                "Processed:",
-                processedWords
-            );
-
-            console.log(
-                "Translations:",
-                translations
-            );
         }
     };
 

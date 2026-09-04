@@ -1,10 +1,9 @@
 let fslDictionary = {};
+let phraseMappings = {};
 
 
 async function loadDictionary() {
-
     try {
-
         const dictionaryURL =
             chrome.runtime.getURL("dictionary.json");
 
@@ -20,7 +19,6 @@ async function loadDictionary() {
         );
 
     } catch (error) {
-
         console.error(
             "Error loading dictionary:",
             error
@@ -29,19 +27,61 @@ async function loadDictionary() {
 }
 
 
+async function loadPhraseMappings() {
+    try {
+        const mappingURL =
+            chrome.runtime.getURL(
+                "phrase_mappings.json"
+            );
+
+        const response =
+            await fetch(mappingURL);
+
+        phraseMappings =
+            await response.json();
+
+        console.log(
+            "Phrase mappings loaded:",
+            phraseMappings
+        );
+
+    } catch (error) {
+        console.error(
+            "Error loading phrase mappings:",
+            error
+        );
+    }
+}
+
+
+function normalizeText(text) {
+    return text
+        .toLowerCase()
+        .replace(/[.,!?;:]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+
+function findPhraseMapping(text) {
+    const normalizedText =
+        normalizeText(text);
+
+    // Check exact phrase match first
+    if (phraseMappings[normalizedText]) {
+        return {
+            phrase: normalizedText,
+            ...phraseMappings[normalizedText]
+        };
+    }
+
+    return null;
+}
+
+
 function processText(text) {
-
-    // Convert text to lowercase
-    let processedText = text.toLowerCase();
-
-    // Remove punctuation
-    processedText =
-        processedText.replace(/[.,!?;:]/g, "");
-
-    // Remove extra spaces
-    processedText =
-        processedText.replace(/\s+/g, " ").trim();
-
+    let processedText =
+        normalizeText(text);
 
     const stopWords = [
         "ay",
@@ -56,53 +96,39 @@ function processText(text) {
         "isang"
     ];
 
-
     let words =
         processedText.split(" ");
 
-
-    words =
-        words.filter(
-            word => !stopWords.includes(word)
-        );
-
+    words = words.filter(
+        word => !stopWords.includes(word)
+    );
 
     return words;
 }
 
 
 function translateWords(words) {
-
     const translations = [];
 
-    words.forEach(word => {
+    words.forEach((word) => {
 
         if (fslDictionary[word]) {
 
             translations.push({
-
                 word: word,
-
                 animation:
                     fslDictionary[word].animation,
-
                 found: true
-
             });
 
         } else {
 
             translations.push({
-
                 word: word,
-
                 animation: null,
-
                 found: false
-
             });
         }
-
     });
 
     return translations;

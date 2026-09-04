@@ -18,6 +18,7 @@
         {
             "resources": [
                 "dictionary.json",
+                "phrase_mappings.json",
                 "assets/gifs/*"
             ],
             "matches": [
