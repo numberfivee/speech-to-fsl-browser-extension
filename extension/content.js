@@ -1,61 +1,100 @@
 chrome.runtime.onMessage.addListener((message) => {
+
     if (message.action === "startTranslation") {
+
         createTranslatorWidget();
 
         Promise.all([
             loadDictionary(),
             loadPhraseMappings()
         ]).then(() => {
+
             startSpeechRecognition();
+
         });
     }
 
+
     if (message.action === "stopTranslation") {
+
         stopSpeechRecognition();
+
         removeTranslatorWidget();
+
     }
+
 });
+
 
 let recognition = null;
 
 
 function createTranslatorWidget() {
-    // Prevent multiple widgets
-    if (document.getElementById("speech-to-fsl-widget")) {
+
+    if (
+        document.getElementById(
+            "speech-to-fsl-widget"
+        )
+    ) {
         return;
     }
 
-    const widget = document.createElement("div");
 
-    widget.id = "speech-to-fsl-widget";
+    const widget =
+        document.createElement("div");
+
+
+    widget.id =
+        "speech-to-fsl-widget";
+
 
     widget.innerHTML = `
+
         <div class="fsl-header">
+
             <h2>Speech to FSL</h2>
 
-            <button id="fsl-close-btn">×</button>
+            <button id="fsl-close-btn">
+                ×
+            </button>
+
         </div>
+
 
         <div class="fsl-content">
 
+
             <div class="fsl-section">
-                <h3>Recognized Speech</h3>
+
+                <h3>
+                    Recognized Speech
+                </h3>
 
                 <p id="recognized-speech">
                     Waiting for speech...
                 </p>
+
             </div>
 
+
             <div class="fsl-section">
-                <h3>Processed Text</h3>
+
+                <h3>
+                    Processed Text
+                </h3>
 
                 <p id="processed-text">
                     Waiting for processing...
                 </p>
+
             </div>
 
+
             <div class="fsl-section">
-                <h3>FSL Translation</h3>
+
+                <h3>
+                    FSL Translation
+                </h3>
 
                 <div id="fsl-animation">
                     Waiting for translation...
@@ -64,99 +103,182 @@ function createTranslatorWidget() {
                 <div id="translation-details">
                     No translation yet.
                 </div>
+
             </div>
 
+
         </div>
+
     `;
 
+
     document.body.appendChild(widget);
+
 
     document
         .getElementById("fsl-close-btn")
         .addEventListener("click", () => {
+
             stopSpeechRecognition();
+
             removeTranslatorWidget();
+
         });
+
 }
 
 
 function removeTranslatorWidget() {
-    const widget = document.getElementById("speech-to-fsl-widget");
+
+    const widget =
+        document.getElementById(
+            "speech-to-fsl-widget"
+        );
+
 
     if (widget) {
+
         widget.remove();
+
     }
+
 }
 
 
 function startSpeechRecognition() {
+
     const SpeechRecognition =
         window.SpeechRecognition ||
         window.webkitSpeechRecognition;
 
+
     if (!SpeechRecognition) {
-        document.getElementById("recognized-speech").textContent =
-            "Speech recognition is not supported.";
+
+        const element =
+            document.getElementById(
+                "recognized-speech"
+            );
+
+
+        if (element) {
+
+            element.textContent =
+                "Speech recognition is not supported.";
+
+        }
 
         return;
     }
 
-    recognition = new SpeechRecognition();
 
-    recognition.lang = "fil-PH";
-    recognition.continuous = true;
-    recognition.interimResults = true;
+    // Prevent multiple recognition sessions
+    if (recognition) {
+
+        console.log(
+            "Speech recognition is already running."
+        );
+
+        return;
+    }
+
+
+    recognition =
+        new SpeechRecognition();
+
+
+    recognition.lang =
+        "fil-PH";
+
+
+    recognition.continuous =
+        true;
+
+
+    recognition.interimResults =
+        true;
 
 
     recognition.onstart = () => {
+
         const speechElement =
-            document.getElementById("recognized-speech");
+            document.getElementById(
+                "recognized-speech"
+            );
+
 
         if (speechElement) {
-            speechElement.textContent = "Listening...";
+
+            speechElement.textContent =
+                "Listening...";
+
         }
+
     };
 
 
     recognition.onresult = (event) => {
+
         let interimTranscript = "";
+
         let finalTranscript = "";
+
 
         for (
             let i = event.resultIndex;
             i < event.results.length;
             i++
         ) {
-            const transcript =
-                event.results[i][0].transcript;
 
-            if (event.results[i].isFinal) {
-                finalTranscript += transcript;
+            const transcript =
+                event.results[i][0]
+                    .transcript;
+
+
+            if (
+                event.results[i].isFinal
+            ) {
+
+                finalTranscript +=
+                    transcript;
+
             } else {
-                interimTranscript += transcript;
+
+                interimTranscript +=
+                    transcript;
+
             }
+
         }
 
 
         const speechElement =
-            document.getElementById("recognized-speech");
+            document.getElementById(
+                "recognized-speech"
+            );
+
 
         if (speechElement) {
+
             speechElement.textContent =
-                finalTranscript || interimTranscript;
+                finalTranscript ||
+                interimTranscript;
+
         }
 
 
-        // Process only final speech results
         if (finalTranscript) {
 
-            // STEP 1: Check for a complete phrase match
             const phraseMatch =
-                findPhraseMapping(finalTranscript);
+                findPhraseMapping(
+                    finalTranscript
+                );
 
 
             const processedTextElement =
-                document.getElementById("processed-text");
+                document.getElementById(
+                    "processed-text"
+                );
+
 
             const translationDetails =
                 document.getElementById(
@@ -164,24 +286,54 @@ function startSpeechRecognition() {
                 );
 
 
-            // If a phrase match is found
             if (phraseMatch) {
 
-                if (processedTextElement) {
-                    processedTextElement.textContent =
+                if (
+                    processedTextElement
+                ) {
+
+                    processedTextElement
+                        .textContent =
                         phraseMatch.phrase;
+
                 }
 
 
                 if (translationDetails) {
 
                     translationDetails.innerHTML = `
-                        <p><strong>✓ Phrase Match Found</strong></p>
-                        <p>Input: ${phraseMatch.phrase}</p>
-                        <p>FSL-105 Label: ${phraseMatch.dataset_label}</p>
-                        <p>Dataset ID: ${phraseMatch.dataset_id}</p>
-                        <p>Category: ${phraseMatch.category}</p>
-                        <p>Source: ${phraseMatch.source}</p>
+
+                        <p>
+                            <strong>
+                                ✓ Phrase Match Found
+                            </strong>
+                        </p>
+
+                        <p>
+                            Input:
+                            ${phraseMatch.phrase}
+                        </p>
+
+                        <p>
+                            FSL-105 Label:
+                            ${phraseMatch.dataset_label}
+                        </p>
+
+                        <p>
+                            Dataset ID:
+                            ${phraseMatch.dataset_id}
+                        </p>
+
+                        <p>
+                            Category:
+                            ${phraseMatch.category}
+                        </p>
+
+                        <p>
+                            Source:
+                            ${phraseMatch.source}
+                        </p>
+
                     `;
                 }
 
@@ -191,95 +343,137 @@ function startSpeechRecognition() {
                     phraseMatch
                 );
 
+
             } else {
 
-                // STEP 2: No phrase match
-                // Use existing word-level NLP
-
                 const processedWords =
-                    processText(finalTranscript);
+                    processText(
+                        finalTranscript
+                    );
 
 
-                if (processedTextElement) {
+                if (
+                    processedTextElement
+                ) {
 
-                    processedTextElement.textContent =
-                        processedWords.join(" ");
+                    processedTextElement
+                        .textContent =
+                        processedWords.join(
+                            " "
+                        );
+
                 }
 
 
                 const translations =
-                    translateWords(processedWords);
+                    translateWords(
+                        processedWords
+                    );
 
 
                 if (translationDetails) {
 
-                    translationDetails.innerHTML = "";
+                    translationDetails
+                        .innerHTML = "";
 
 
-                    translations.forEach((item) => {
+                    translations.forEach(
+                        (item) => {
 
-                        const translationItem =
-                            document.createElement("p");
+                            const
+                                translationItem =
+                                document
+                                    .createElement(
+                                        "p"
+                                    );
 
 
-                        if (item.found) {
+                            if (item.found) {
 
-                            translationItem.textContent =
-                                `✓ ${item.word} → Sign found`;
+                                translationItem
+                                    .textContent =
+                                    `✓ ${item.word} → Sign found`;
 
-                        } else {
+                            } else {
 
-                            translationItem.textContent =
-                                `✗ ${item.word} → Sign not found`;
+                                translationItem
+                                    .textContent =
+                                    `✗ ${item.word} → Sign not found`;
+
+                            }
+
+
+                            translationDetails
+                                .appendChild(
+                                    translationItem
+                                );
+
                         }
+                    );
 
-
-                        translationDetails.appendChild(
-                            translationItem
-                        );
-                    });
                 }
 
 
                 console.log(
-                    "No phrase match. Word translations:",
+                    "No phrase match:",
                     translations
                 );
+
             }
+
         }
+
     };
 
 
-    recognition.onerror = (event) => {
-        console.error(
-            "Speech recognition error:",
-            event.error
-        );
+    recognition.onerror =
+        (event) => {
 
-        const speechElement =
-            document.getElementById("recognized-speech");
+            console.error(
+                "Speech recognition error:",
+                event.error
+            );
 
-        if (speechElement) {
-            speechElement.textContent =
-                "Error: " + event.error;
-        }
-    };
+
+            const speechElement =
+                document.getElementById(
+                    "recognized-speech"
+                );
+
+
+            if (speechElement) {
+
+                speechElement.textContent =
+                    "Error: " +
+                    event.error;
+
+            }
+
+        };
 
 
     recognition.onend = () => {
+
         console.log(
             "Speech recognition stopped."
         );
+
     };
 
 
     recognition.start();
+
 }
 
 
 function stopSpeechRecognition() {
+
     if (recognition) {
+
         recognition.stop();
+
         recognition = null;
+
     }
+
 }

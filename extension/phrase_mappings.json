@@ -74,5 +74,33 @@
         "dataset_id": 8,
         "category": "GREETING",
         "source": "FSL-105"
+    },
+
+    "oo": {
+        "dataset_label": "YES",
+        "dataset_id": 15,
+        "category": "SURVIVAL",
+        "source": "FSL-105"
+    },
+
+    "yes": {
+        "dataset_label": "YES",
+        "dataset_id": 15,
+        "category": "SURVIVAL",
+        "source": "FSL-105"
+    },
+
+    "hindi": {
+        "dataset_label": "NO",
+        "dataset_id": 14,
+        "category": "SURVIVAL",
+        "source": "FSL-105"
+    },
+
+    "no": {
+        "dataset_label": "NO",
+        "dataset_id": 14,
+        "category": "SURVIVAL",
+        "source": "FSL-105"
     }
 }

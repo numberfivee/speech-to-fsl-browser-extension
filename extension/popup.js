@@ -5,61 +5,121 @@ const status = document.getElementById("status");
 
 startBtn.addEventListener("click", async () => {
 
-    const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true
-    });
+    try {
+
+        const [tab] = await chrome.tabs.query({
+            active: true,
+            currentWindow: true
+        });
 
 
-    // Inject widget styles
-    await chrome.scripting.insertCSS({
-        target: {
-            tabId: tab.id
-        },
-        files: ["overlay.css"]
-    });
+        // Check whether our scripts are already loaded
+        const [result] = await chrome.scripting.executeScript({
+            target: {
+                tabId: tab.id
+            },
+
+            func: () => {
+                return window.__speechToFSLLoaded === true;
+            }
+        });
 
 
-    // Inject translator first
-    await chrome.scripting.executeScript({
-        target: {
-            tabId: tab.id
-        },
-        files: ["translator.js"]
-    });
+        const scriptsAlreadyLoaded = result.result;
 
 
-    // Inject main content script
-    await chrome.scripting.executeScript({
-        target: {
-            tabId: tab.id
-        },
-        files: ["content.js"]
-    });
+        // Only inject scripts once
+        if (!scriptsAlreadyLoaded) {
+
+            // Inject widget styles
+            await chrome.scripting.insertCSS({
+                target: {
+                    tabId: tab.id
+                },
+                files: ["overlay.css"]
+            });
 
 
-    // Start translation
-    chrome.tabs.sendMessage(tab.id, {
-        action: "startTranslation"
-    });
+            // Inject translator
+            await chrome.scripting.executeScript({
+                target: {
+                    tabId: tab.id
+                },
+                files: ["translator.js"]
+            });
 
 
-    status.textContent = "Listening";
+            // Inject content script
+            await chrome.scripting.executeScript({
+                target: {
+                    tabId: tab.id
+                },
+                files: ["content.js"]
+            });
+
+
+            // Mark scripts as loaded
+            await chrome.scripting.executeScript({
+                target: {
+                    tabId: tab.id
+                },
+
+                func: () => {
+                    window.__speechToFSLLoaded = true;
+                }
+            });
+
+        }
+
+
+        // Start translation
+        await chrome.tabs.sendMessage(tab.id, {
+            action: "startTranslation"
+        });
+
+
+        status.textContent = "Listening";
+
+
+    } catch (error) {
+
+        console.error(
+            "Failed to start translator:",
+            error
+        );
+
+        status.textContent = "Error";
+
+    }
+
 });
 
 
 stopBtn.addEventListener("click", async () => {
 
-    const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true
-    });
+    try {
+
+        const [tab] = await chrome.tabs.query({
+            active: true,
+            currentWindow: true
+        });
 
 
-    chrome.tabs.sendMessage(tab.id, {
-        action: "stopTranslation"
-    });
+        await chrome.tabs.sendMessage(tab.id, {
+            action: "stopTranslation"
+        });
 
 
-    status.textContent = "Stopped";
+        status.textContent = "Stopped";
+
+
+    } catch (error) {
+
+        console.error(
+            "Failed to stop translator:",
+            error
+        );
+
+    }
+
 });
