@@ -6,7 +6,28 @@
         "source": "FSL-105"
     },
 
+    "magandang umaga po": {
+        "dataset_label": "GOOD MORNING",
+        "dataset_id": 0,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "good morning": {
+        "dataset_label": "GOOD MORNING",
+        "dataset_id": 0,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
     "magandang hapon": {
+        "dataset_label": "GOOD AFTERNOON",
+        "dataset_id": 1,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "magandang hapon po": {
         "dataset_label": "GOOD AFTERNOON",
         "dataset_id": 1,
         "category": "GREETING",
@@ -20,7 +41,21 @@
         "source": "FSL-105"
     },
 
+    "magandang gabi po": {
+        "dataset_label": "GOOD EVENING",
+        "dataset_id": 2,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
     "hello": {
+        "dataset_label": "HELLO",
+        "dataset_id": 3,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "hi": {
         "dataset_label": "HELLO",
         "dataset_id": 3,
         "category": "GREETING",
@@ -41,6 +76,20 @@
         "source": "FSL-105"
     },
 
+    "kamusta": {
+        "dataset_label": "HOW ARE YOU",
+        "dataset_id": 4,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "kamusta ka": {
+        "dataset_label": "HOW ARE YOU",
+        "dataset_id": 4,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
     "ayos lang ako": {
         "dataset_label": "IM FINE",
         "dataset_id": 5,
@@ -48,7 +97,28 @@
         "source": "FSL-105"
     },
 
+    "mabuti naman ako": {
+        "dataset_label": "IM FINE",
+        "dataset_id": 5,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "okay lang ako": {
+        "dataset_label": "IM FINE",
+        "dataset_id": 5,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
     "nice to meet you": {
+        "dataset_label": "NICE TO MEET YOU",
+        "dataset_id": 6,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "masaya akong makilala ka": {
         "dataset_label": "NICE TO MEET YOU",
         "dataset_id": 6,
         "category": "GREETING",
@@ -69,6 +139,20 @@
         "source": "FSL-105"
     },
 
+    "maraming salamat po": {
+        "dataset_label": "THANK YOU",
+        "dataset_id": 7,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "salamat po": {
+        "dataset_label": "THANK YOU",
+        "dataset_id": 7,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
     "walang anuman": {
         "dataset_label": "YOURE WELCOME",
         "dataset_id": 8,
@@ -76,16 +160,65 @@
         "source": "FSL-105"
     },
 
-    "oo": {
-        "dataset_label": "YES",
-        "dataset_id": 15,
+    "walang anuman po": {
+        "dataset_label": "YOURE WELCOME",
+        "dataset_id": 8,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "see you tomorrow": {
+        "dataset_label": "SEE YOU TOMORROW",
+        "dataset_id": 9,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "kita tayo bukas": {
+        "dataset_label": "SEE YOU TOMORROW",
+        "dataset_id": 9,
+        "category": "GREETING",
+        "source": "FSL-105"
+    },
+
+    "naiintindihan ko": {
+        "dataset_label": "UNDERSTAND",
+        "dataset_id": 10,
         "category": "SURVIVAL",
         "source": "FSL-105"
     },
 
-    "yes": {
-        "dataset_label": "YES",
-        "dataset_id": 15,
+    "naiintindihan": {
+        "dataset_label": "UNDERSTAND",
+        "dataset_id": 10,
+        "category": "SURVIVAL",
+        "source": "FSL-105"
+    },
+
+    "hindi ko naiintindihan": {
+        "dataset_label": "DON’T UNDERSTAND",
+        "dataset_id": 11,
+        "category": "SURVIVAL",
+        "source": "FSL-105"
+    },
+
+    "hindi naiintindihan": {
+        "dataset_label": "DON’T UNDERSTAND",
+        "dataset_id": 11,
+        "category": "SURVIVAL",
+        "source": "FSL-105"
+    },
+
+    "alam ko": {
+        "dataset_label": "KNOW",
+        "dataset_id": 12,
+        "category": "SURVIVAL",
+        "source": "FSL-105"
+    },
+
+    "hindi ko alam": {
+        "dataset_label": "DON’T KNOW",
+        "dataset_id": 13,
         "category": "SURVIVAL",
         "source": "FSL-105"
     },
@@ -100,6 +233,20 @@
     "no": {
         "dataset_label": "NO",
         "dataset_id": 14,
+        "category": "SURVIVAL",
+        "source": "FSL-105"
+    },
+
+    "oo": {
+        "dataset_label": "YES",
+        "dataset_id": 15,
+        "category": "SURVIVAL",
+        "source": "FSL-105"
+    },
+
+    "yes": {
+        "dataset_label": "YES",
+        "dataset_id": 15,
         "category": "SURVIVAL",
         "source": "FSL-105"
     }

@@ -19,7 +19,9 @@
             "resources": [
                 "dictionary.json",
                 "phrase_mappings.json",
-                "assets/gifs/*"
+                "video_lookup.json",
+                "assets/gifs/*",
+                "fsl_videos/*"
             ],
             "matches": [
                 "<all_urls>"

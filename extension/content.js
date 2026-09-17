@@ -6,10 +6,36 @@ chrome.runtime.onMessage.addListener((message) => {
 
         Promise.all([
             loadDictionary(),
-            loadPhraseMappings()
-        ]).then(() => {
+            loadPhraseMappings(),
+            loadVideoLookup()
+        ])
+        .then(() => {
+
+            console.log(
+                "All translation resources loaded."
+            );
 
             startSpeechRecognition();
+
+        })
+        .catch((error) => {
+
+            console.error(
+                "Failed to load translation resources:",
+                error
+            );
+
+            const speechElement =
+                document.getElementById(
+                    "recognized-speech"
+                );
+
+            if (speechElement) {
+
+                speechElement.textContent =
+                    "Failed to load FSL translation resources.";
+
+            }
 
         });
     }
@@ -288,13 +314,83 @@ function startSpeechRecognition() {
 
             if (phraseMatch) {
 
-                if (
-                    processedTextElement
-                ) {
+                if (processedTextElement) {
 
-                    processedTextElement
-                        .textContent =
+                    processedTextElement.textContent =
                         phraseMatch.phrase;
+
+                }
+
+
+                const videoData =
+                    getFSLVideo(
+                        phraseMatch.dataset_id
+                    );
+
+
+                const animationElement =
+                    document.getElementById(
+                        "fsl-animation"
+                    );
+
+
+                if (animationElement) {
+
+                    animationElement.innerHTML = "";
+
+
+                    if (videoData) {
+
+                        const video =
+                            document.createElement("video");
+
+
+                        video.src =
+                            videoData.video;
+
+
+                        video.controls =
+                            true;
+
+
+                        video.autoplay =
+                            true;
+
+
+                        video.loop =
+                            true;
+
+
+                        video.muted =
+                            true;
+
+
+                        video.playsInline =
+                            true;
+
+
+                        video.style.width =
+                            "100%";
+
+
+                        video.style.maxWidth =
+                            "400px";
+
+
+                        video.style.borderRadius =
+                            "10px";
+
+
+                        animationElement.appendChild(
+                            video
+                        );
+
+                    } else {
+
+                        animationElement.textContent =
+                            "FSL video not available.";
+
+                    }
 
                 }
 
@@ -335,6 +431,7 @@ function startSpeechRecognition() {
                         </p>
 
                     `;
+
                 }
 
 
@@ -344,79 +441,9 @@ function startSpeechRecognition() {
                 );
 
 
-            } else {
-
-                const processedWords =
-                    processText(
-                        finalTranscript
-                    );
-
-
-                if (
-                    processedTextElement
-                ) {
-
-                    processedTextElement
-                        .textContent =
-                        processedWords.join(
-                            " "
-                        );
-
-                }
-
-
-                const translations =
-                    translateWords(
-                        processedWords
-                    );
-
-
-                if (translationDetails) {
-
-                    translationDetails
-                        .innerHTML = "";
-
-
-                    translations.forEach(
-                        (item) => {
-
-                            const
-                                translationItem =
-                                document
-                                    .createElement(
-                                        "p"
-                                    );
-
-
-                            if (item.found) {
-
-                                translationItem
-                                    .textContent =
-                                    `✓ ${item.word} → Sign found`;
-
-                            } else {
-
-                                translationItem
-                                    .textContent =
-                                    `✗ ${item.word} → Sign not found`;
-
-                            }
-
-
-                            translationDetails
-                                .appendChild(
-                                    translationItem
-                                );
-
-                        }
-                    );
-
-                }
-
-
                 console.log(
-                    "No phrase match:",
-                    translations
+                    "Video:",
+                    videoData
                 );
 
             }

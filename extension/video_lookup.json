@@ -1,0 +1,632 @@
+{
+    "0": {
+        "label": "GOOD MORNING",
+        "category": "GREETING",
+        "video": "fsl_videos/0/18.MOV",
+        "original_path": "clips/0/18.MOV"
+    },
+    "1": {
+        "label": "GOOD AFTERNOON",
+        "category": "GREETING",
+        "video": "fsl_videos/1/0.MOV",
+        "original_path": "clips/1/0.MOV"
+    },
+    "2": {
+        "label": "GOOD EVENING",
+        "category": "GREETING",
+        "video": "fsl_videos/2/2.MOV",
+        "original_path": "clips/2/2.MOV"
+    },
+    "3": {
+        "label": "HELLO",
+        "category": "GREETING",
+        "video": "fsl_videos/3/8.MOV",
+        "original_path": "clips/3/8.MOV"
+    },
+    "4": {
+        "label": "HOW ARE YOU",
+        "category": "GREETING",
+        "video": "fsl_videos/4/2.MOV",
+        "original_path": "clips/4/2.MOV"
+    },
+    "5": {
+        "label": "IM FINE",
+        "category": "GREETING",
+        "video": "fsl_videos/5/10.MOV",
+        "original_path": "clips/5/10.MOV"
+    },
+    "6": {
+        "label": "NICE TO MEET YOU",
+        "category": "GREETING",
+        "video": "fsl_videos/6/21.MOV",
+        "original_path": "clips/6/21.MOV"
+    },
+    "7": {
+        "label": "THANK YOU",
+        "category": "GREETING",
+        "video": "fsl_videos/7/12.MOV",
+        "original_path": "clips/7/12.MOV"
+    },
+    "8": {
+        "label": "YOURE WELCOME",
+        "category": "GREETING",
+        "video": "fsl_videos/8/17.MOV",
+        "original_path": "clips/8/17.MOV"
+    },
+    "9": {
+        "label": "SEE YOU TOMORROW",
+        "category": "GREETING",
+        "video": "fsl_videos/9/3.MOV",
+        "original_path": "clips/9/3.MOV"
+    },
+    "10": {
+        "label": "UNDERSTAND",
+        "category": "SURVIVAL",
+        "video": "fsl_videos/10/0.MOV",
+        "original_path": "clips/10/0.MOV"
+    },
+    "11": {
+        "label": "DON’T UNDERSTAND",
+        "category": "SURVIVAL",
+        "video": "fsl_videos/11/4.MOV",
+        "original_path": "clips/11/4.MOV"
+    },
+    "12": {
+        "label": "KNOW",
+        "category": "SURVIVAL",
+        "video": "fsl_videos/12/17.MOV",
+        "original_path": "clips/12/17.MOV"
+    },
+    "13": {
+        "label": "DON’T KNOW",
+        "category": "SURVIVAL",
+        "video": "fsl_videos/13/2.MOV",
+        "original_path": "clips/13/2.MOV"
+    },
+    "14": {
+        "label": "NO",
+        "category": "SURVIVAL",
+        "video": "fsl_videos/14/15.MOV",
+        "original_path": "clips/14/15.MOV"
+    },
+    "15": {
+        "label": "YES",
+        "category": "SURVIVAL",
+        "video": "fsl_videos/15/8.MOV",
+        "original_path": "clips/15/8.MOV"
+    },
+    "16": {
+        "label": "WRONG",
+        "category": "SURVIVAL",
+        "video": "fsl_videos/16/10.MOV",
+        "original_path": "clips/16/10.MOV"
+    },
+    "17": {
+        "label": "CORRECT",
+        "category": "SURVIVAL",
+        "video": "fsl_videos/17/6.MOV",
+        "original_path": "clips/17/6.MOV"
+    },
+    "18": {
+        "label": "SLOW",
+        "category": "SURVIVAL",
+        "video": "fsl_videos/18/20.MOV",
+        "original_path": "clips/18/20.MOV"
+    },
+    "19": {
+        "label": "FAST",
+        "category": "SURVIVAL",
+        "video": "fsl_videos/19/15.MOV",
+        "original_path": "clips/19/15.MOV"
+    },
+    "20": {
+        "label": "ONE",
+        "category": "NUMBER",
+        "video": "fsl_videos/20/3.MOV",
+        "original_path": "clips/20/3.MOV"
+    },
+    "21": {
+        "label": "TWO",
+        "category": "NUMBER",
+        "video": "fsl_videos/21/9.MOV",
+        "original_path": "clips/21/9.MOV"
+    },
+    "22": {
+        "label": "THREE",
+        "category": "NUMBER",
+        "video": "fsl_videos/22/5.MOV",
+        "original_path": "clips/22/5.MOV"
+    },
+    "23": {
+        "label": "FOUR",
+        "category": "NUMBER",
+        "video": "fsl_videos/23/11.MOV",
+        "original_path": "clips/23/11.MOV"
+    },
+    "24": {
+        "label": "FIVE",
+        "category": "NUMBER",
+        "video": "fsl_videos/24/12.MOV",
+        "original_path": "clips/24/12.MOV"
+    },
+    "25": {
+        "label": "SIX",
+        "category": "NUMBER",
+        "video": "fsl_videos/25/0.MOV",
+        "original_path": "clips/25/0.MOV"
+    },
+    "26": {
+        "label": "SEVEN",
+        "category": "NUMBER",
+        "video": "fsl_videos/26/9.MOV",
+        "original_path": "clips/26/9.MOV"
+    },
+    "27": {
+        "label": "EIGHT",
+        "category": "NUMBER",
+        "video": "fsl_videos/27/4.MOV",
+        "original_path": "clips/27/4.MOV"
+    },
+    "28": {
+        "label": "NINE ",
+        "category": "NUMBER",
+        "video": "fsl_videos/28/10.MOV",
+        "original_path": "clips/28/10.MOV"
+    },
+    "29": {
+        "label": "TEN",
+        "category": "NUMBER",
+        "video": "fsl_videos/29/19.MOV",
+        "original_path": "clips/29/19.MOV"
+    },
+    "30": {
+        "label": "JANUARY",
+        "category": "CALENDAR",
+        "video": "fsl_videos/30/10.MOV",
+        "original_path": "clips/30/10.MOV"
+    },
+    "31": {
+        "label": "FEBRUARY",
+        "category": "CALENDAR",
+        "video": "fsl_videos/31/5.MOV",
+        "original_path": "clips/31/5.MOV"
+    },
+    "32": {
+        "label": "MARCH",
+        "category": "CALENDAR",
+        "video": "fsl_videos/32/5.MOV",
+        "original_path": "clips/32/5.MOV"
+    },
+    "33": {
+        "label": "APRIL",
+        "category": "CALENDAR",
+        "video": "fsl_videos/33/7.MOV",
+        "original_path": "clips/33/7.MOV"
+    },
+    "34": {
+        "label": "MAY",
+        "category": "CALENDAR",
+        "video": "fsl_videos/34/8.MOV",
+        "original_path": "clips/34/8.MOV"
+    },
+    "35": {
+        "label": "JUNE",
+        "category": "CALENDAR",
+        "video": "fsl_videos/35/19.MOV",
+        "original_path": "clips/35/19.MOV"
+    },
+    "36": {
+        "label": "JULY",
+        "category": "CALENDAR",
+        "video": "fsl_videos/36/20.MOV",
+        "original_path": "clips/36/20.MOV"
+    },
+    "37": {
+        "label": "AUGUST",
+        "category": "CALENDAR",
+        "video": "fsl_videos/37/6.MOV",
+        "original_path": "clips/37/6.MOV"
+    },
+    "38": {
+        "label": "SEPTEMBER",
+        "category": "CALENDAR",
+        "video": "fsl_videos/38/15.MOV",
+        "original_path": "clips/38/15.MOV"
+    },
+    "39": {
+        "label": "OCTOBER",
+        "category": "CALENDAR",
+        "video": "fsl_videos/39/9.MOV",
+        "original_path": "clips/39/9.MOV"
+    },
+    "40": {
+        "label": "NOVEMBER",
+        "category": "CALENDAR",
+        "video": "fsl_videos/40/14.MOV",
+        "original_path": "clips/40/14.MOV"
+    },
+    "41": {
+        "label": "DECEMBER",
+        "category": "CALENDAR",
+        "video": "fsl_videos/41/12.MOV",
+        "original_path": "clips/41/12.MOV"
+    },
+    "42": {
+        "label": "MONDAY",
+        "category": "DAYS",
+        "video": "fsl_videos/42/16.MOV",
+        "original_path": "clips/42/16.MOV"
+    },
+    "43": {
+        "label": "TUESDAY",
+        "category": "DAYS",
+        "video": "fsl_videos/43/3.MOV",
+        "original_path": "clips/43/3.MOV"
+    },
+    "44": {
+        "label": "WEDNESDAY",
+        "category": "DAYS",
+        "video": "fsl_videos/44/6.MOV",
+        "original_path": "clips/44/6.MOV"
+    },
+    "45": {
+        "label": "THURSDAY",
+        "category": "DAYS",
+        "video": "fsl_videos/45/5.MOV",
+        "original_path": "clips/45/5.MOV"
+    },
+    "46": {
+        "label": "FRIDAY",
+        "category": "DAYS",
+        "video": "fsl_videos/46/15.MOV",
+        "original_path": "clips/46/15.MOV"
+    },
+    "47": {
+        "label": "SATURDAY",
+        "category": "DAYS",
+        "video": "fsl_videos/47/2.MOV",
+        "original_path": "clips/47/2.MOV"
+    },
+    "48": {
+        "label": "SUNDAY",
+        "category": "DAYS",
+        "video": "fsl_videos/48/11.MOV",
+        "original_path": "clips/48/11.MOV"
+    },
+    "49": {
+        "label": "TODAY",
+        "category": "DAYS",
+        "video": "fsl_videos/49/4.MOV",
+        "original_path": "clips/49/4.MOV"
+    },
+    "50": {
+        "label": "TOMORROW",
+        "category": "DAYS",
+        "video": "fsl_videos/50/10.MOV",
+        "original_path": "clips/50/10.MOV"
+    },
+    "51": {
+        "label": "YESTERDAY",
+        "category": "DAYS",
+        "video": "fsl_videos/51/0.MOV",
+        "original_path": "clips/51/0.MOV"
+    },
+    "52": {
+        "label": "FATHER",
+        "category": "FAMILY",
+        "video": "fsl_videos/52/10.MOV",
+        "original_path": "clips/52/10.MOV"
+    },
+    "53": {
+        "label": "MOTHER",
+        "category": "FAMILY",
+        "video": "fsl_videos/53/19.MOV",
+        "original_path": "clips/53/19.MOV"
+    },
+    "54": {
+        "label": "SON",
+        "category": "FAMILY",
+        "video": "fsl_videos/54/6.MOV",
+        "original_path": "clips/54/6.MOV"
+    },
+    "55": {
+        "label": "DAUGHTER",
+        "category": "FAMILY",
+        "video": "fsl_videos/55/9.MOV",
+        "original_path": "clips/55/9.MOV"
+    },
+    "56": {
+        "label": "GRANDFATHER",
+        "category": "FAMILY",
+        "video": "fsl_videos/56/13.MOV",
+        "original_path": "clips/56/13.MOV"
+    },
+    "57": {
+        "label": "GRANDMOTHER",
+        "category": "FAMILY",
+        "video": "fsl_videos/57/18.MOV",
+        "original_path": "clips/57/18.MOV"
+    },
+    "58": {
+        "label": "UNCLE",
+        "category": "FAMILY",
+        "video": "fsl_videos/58/11.MOV",
+        "original_path": "clips/58/11.MOV"
+    },
+    "59": {
+        "label": "AUNTIE",
+        "category": "FAMILY",
+        "video": "fsl_videos/59/18.MOV",
+        "original_path": "clips/59/18.MOV"
+    },
+    "60": {
+        "label": "COUSIN",
+        "category": "FAMILY",
+        "video": "fsl_videos/60/10.MOV",
+        "original_path": "clips/60/10.MOV"
+    },
+    "61": {
+        "label": "PARENTS",
+        "category": "FAMILY",
+        "video": "fsl_videos/61/8.MOV",
+        "original_path": "clips/61/8.MOV"
+    },
+    "62": {
+        "label": "BOY",
+        "category": "RELATIONSHIPS",
+        "video": "fsl_videos/62/1.MOV",
+        "original_path": "clips/62/1.MOV"
+    },
+    "63": {
+        "label": "GIRL",
+        "category": "RELATIONSHIPS",
+        "video": "fsl_videos/63/10.MOV",
+        "original_path": "clips/63/10.MOV"
+    },
+    "64": {
+        "label": "MAN",
+        "category": "RELATIONSHIPS",
+        "video": "fsl_videos/64/9.MOV",
+        "original_path": "clips/64/9.MOV"
+    },
+    "65": {
+        "label": "WOMAN",
+        "category": "RELATIONSHIPS",
+        "video": "fsl_videos/65/3.MOV",
+        "original_path": "clips/65/3.MOV"
+    },
+    "66": {
+        "label": "DEAF",
+        "category": "RELATIONSHIPS",
+        "video": "fsl_videos/66/16.MOV",
+        "original_path": "clips/66/16.MOV"
+    },
+    "67": {
+        "label": "HARD OF HEARING",
+        "category": "RELATIONSHIPS",
+        "video": "fsl_videos/67/2.MOV",
+        "original_path": "clips/67/2.MOV"
+    },
+    "68": {
+        "label": "WEELCHAIR PERSON",
+        "category": "RELATIONSHIPS",
+        "video": "fsl_videos/68/11.MOV",
+        "original_path": "clips/68/11.MOV"
+    },
+    "69": {
+        "label": "BLIND",
+        "category": "RELATIONSHIPS",
+        "video": "fsl_videos/69/11.MOV",
+        "original_path": "clips/69/11.MOV"
+    },
+    "70": {
+        "label": "DEAF BLIND",
+        "category": "RELATIONSHIPS",
+        "video": "fsl_videos/70/14.MOV",
+        "original_path": "clips/70/14.MOV"
+    },
+    "71": {
+        "label": "MARRIED",
+        "category": "RELATIONSHIPS",
+        "video": "fsl_videos/71/17.MOV",
+        "original_path": "clips/71/17.MOV"
+    },
+    "72": {
+        "label": "BLUE",
+        "category": "COLOR",
+        "video": "fsl_videos/72/18.MOV",
+        "original_path": "clips/72/18.MOV"
+    },
+    "73": {
+        "label": "GREEN",
+        "category": "COLOR",
+        "video": "fsl_videos/73/2.MOV",
+        "original_path": "clips/73/2.MOV"
+    },
+    "74": {
+        "label": "RED",
+        "category": "COLOR",
+        "video": "fsl_videos/74/6.MOV",
+        "original_path": "clips/74/6.MOV"
+    },
+    "75": {
+        "label": "BROWN",
+        "category": "COLOR",
+        "video": "fsl_videos/75/5.MOV",
+        "original_path": "clips/75/5.MOV"
+    },
+    "76": {
+        "label": "BLACK",
+        "category": "COLOR",
+        "video": "fsl_videos/76/11.MOV",
+        "original_path": "clips/76/11.MOV"
+    },
+    "77": {
+        "label": "WHITE",
+        "category": "COLOR",
+        "video": "fsl_videos/77/0.MOV",
+        "original_path": "clips/77/0.MOV"
+    },
+    "78": {
+        "label": "YELLOW",
+        "category": "COLOR",
+        "video": "fsl_videos/78/10.MOV",
+        "original_path": "clips/78/10.MOV"
+    },
+    "79": {
+        "label": "ORANGE",
+        "category": "COLOR",
+        "video": "fsl_videos/79/15.MOV",
+        "original_path": "clips/79/15.MOV"
+    },
+    "80": {
+        "label": "GRAY",
+        "category": "COLOR",
+        "video": "fsl_videos/80/2.MOV",
+        "original_path": "clips/80/2.MOV"
+    },
+    "81": {
+        "label": "PINK",
+        "category": "COLOR",
+        "video": "fsl_videos/81/7.MOV",
+        "original_path": "clips/81/7.MOV"
+    },
+    "82": {
+        "label": "VIOLET",
+        "category": "COLOR",
+        "video": "fsl_videos/82/14.MOV",
+        "original_path": "clips/82/14.MOV"
+    },
+    "83": {
+        "label": "LIGHT",
+        "category": "COLOR",
+        "video": "fsl_videos/83/14.MOV",
+        "original_path": "clips/83/14.MOV"
+    },
+    "84": {
+        "label": "DARK",
+        "category": "COLOR",
+        "video": "fsl_videos/84/17.MOV",
+        "original_path": "clips/84/17.MOV"
+    },
+    "85": {
+        "label": "BREAD",
+        "category": "FOOD",
+        "video": "fsl_videos/85/6.MOV",
+        "original_path": "clips/85/6.MOV"
+    },
+    "86": {
+        "label": "EGG",
+        "category": "FOOD",
+        "video": "fsl_videos/86/5.MOV",
+        "original_path": "clips/86/5.MOV"
+    },
+    "87": {
+        "label": "FISH",
+        "category": "FOOD",
+        "video": "fsl_videos/87/3.MOV",
+        "original_path": "clips/87/3.MOV"
+    },
+    "88": {
+        "label": "MEAT",
+        "category": "FOOD",
+        "video": "fsl_videos/88/8.MOV",
+        "original_path": "clips/88/8.MOV"
+    },
+    "89": {
+        "label": "CHICKEN",
+        "category": "FOOD",
+        "video": "fsl_videos/89/10.MOV",
+        "original_path": "clips/89/10.MOV"
+    },
+    "90": {
+        "label": "SPAGHETTI",
+        "category": "FOOD",
+        "video": "fsl_videos/90/14.MOV",
+        "original_path": "clips/90/14.MOV"
+    },
+    "91": {
+        "label": "RICE",
+        "category": "FOOD",
+        "video": "fsl_videos/91/14.MOV",
+        "original_path": "clips/91/14.MOV"
+    },
+    "92": {
+        "label": "LONGANISA",
+        "category": "FOOD",
+        "video": "fsl_videos/92/10.MOV",
+        "original_path": "clips/92/10.MOV"
+    },
+    "93": {
+        "label": "SHRIMP",
+        "category": "FOOD",
+        "video": "fsl_videos/93/6.MOV",
+        "original_path": "clips/93/6.MOV"
+    },
+    "94": {
+        "label": "CRAB",
+        "category": "FOOD",
+        "video": "fsl_videos/94/3.MOV",
+        "original_path": "clips/94/3.MOV"
+    },
+    "95": {
+        "label": "HOT",
+        "category": "DRINK",
+        "video": "fsl_videos/95/15.MOV",
+        "original_path": "clips/95/15.MOV"
+    },
+    "96": {
+        "label": "COLD",
+        "category": "DRINK",
+        "video": "fsl_videos/96/14.MOV",
+        "original_path": "clips/96/14.MOV"
+    },
+    "97": {
+        "label": "JUICE",
+        "category": "DRINK",
+        "video": "fsl_videos/97/18.MOV",
+        "original_path": "clips/97/18.MOV"
+    },
+    "98": {
+        "label": "MILK",
+        "category": "DRINK",
+        "video": "fsl_videos/98/1.MOV",
+        "original_path": "clips/98/1.MOV"
+    },
+    "99": {
+        "label": "COFFEE",
+        "category": "DRINK",
+        "video": "fsl_videos/99/2.MOV",
+        "original_path": "clips/99/2.MOV"
+    },
+    "100": {
+        "label": "TEA",
+        "category": "DRINK",
+        "video": "fsl_videos/100/19.MOV",
+        "original_path": "clips/100/19.MOV"
+    },
+    "101": {
+        "label": "BEER",
+        "category": "DRINK",
+        "video": "fsl_videos/101/4.MOV",
+        "original_path": "clips/101/4.MOV"
+    },
+    "102": {
+        "label": "WINE",
+        "category": "DRINK",
+        "video": "fsl_videos/102/3.MOV",
+        "original_path": "clips/102/3.MOV"
+    },
+    "103": {
+        "label": "SUGAR",
+        "category": "DRINK",
+        "video": "fsl_videos/103/13.MOV",
+        "original_path": "clips/103/13.MOV"
+    },
+    "104": {
+        "label": "NO SUGAR",
+        "category": "DRINK",
+        "video": "fsl_videos/104/12.MOV",
+        "original_path": "clips/104/12.MOV"
+    }
+}

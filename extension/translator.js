@@ -1,6 +1,37 @@
 let fslDictionary = {};
 let phraseMappings = {};
+let videoLookup = {};
 
+
+async function loadVideoLookup() {
+
+    try {
+
+        const videoURL =
+            chrome.runtime.getURL(
+                "video_lookup.json"
+            );
+
+        const response =
+            await fetch(videoURL);
+
+        videoLookup =
+            await response.json();
+
+        console.log(
+            "FSL Video Lookup loaded:",
+            videoLookup
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error loading FSL video lookup:",
+            error
+        );
+
+    }
+}
 
 async function loadDictionary() {
 
@@ -182,4 +213,25 @@ function translateWords(words) {
 
 
     return translations;
+}
+
+
+function getFSLVideo(datasetId) {
+
+    const videoData =
+        videoLookup[String(datasetId)];
+
+    if (!videoData) {
+
+        return null;
+
+    }
+
+    return {
+        label: videoData.label,
+        category: videoData.category,
+        video: chrome.runtime.getURL(
+            videoData.video
+        )
+    };
 }
