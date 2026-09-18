@@ -101,44 +101,33 @@ function normalizeText(text) {
 }
 
 
-function findPhraseMapping(text) {
+function findPhraseMappings(text) {
 
-    const normalizedText =
-        normalizeText(text);
+    const normalizedText = normalizeText(text);
 
+    const phrases = Object.keys(phraseMappings)
+        .sort((a, b) => b.length - a.length);
 
-    // Exact match
-    if (phraseMappings[normalizedText]) {
-
-        return {
-            phrase: normalizedText,
-            ...phraseMappings[normalizedText]
-        };
-    }
-
-
-    // Longer phrases first
-    const phrases =
-        Object.keys(phraseMappings)
-            .sort(
-                (a, b) =>
-                    b.length - a.length
-            );
-
+    const matches = [];
+    let remainingText = normalizedText;
 
     for (const phrase of phrases) {
 
-        if (normalizedText.includes(phrase)) {
+        if (remainingText.includes(phrase)) {
 
-            return {
+            matches.push({
                 phrase: phrase,
                 ...phraseMappings[phrase]
-            };
+            });
+
+            remainingText = remainingText.replace(
+                phrase,
+                " "
+            );
         }
     }
 
-
-    return null;
+    return matches;
 }
 
 

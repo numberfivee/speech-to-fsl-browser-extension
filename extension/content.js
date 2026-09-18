@@ -294,8 +294,8 @@ function startSpeechRecognition() {
 
         if (finalTranscript) {
 
-            const phraseMatch =
-                findPhraseMapping(
+            const phraseMatches =
+                findPhraseMappings(
                     finalTranscript
                 );
 
@@ -312,88 +312,150 @@ function startSpeechRecognition() {
                 );
 
 
-            if (phraseMatch) {
+            const animationElement =
+                document.getElementById(
+                    "fsl-animation"
+                );
+
+
+            // ----------------------------------------------------
+            // CHECK IF PHRASES WERE FOUND
+            // ----------------------------------------------------
+
+            if (phraseMatches.length > 0) {
+
+
+                // ------------------------------------------------
+                // DISPLAY ALL MATCHED PHRASES
+                // ------------------------------------------------
 
                 if (processedTextElement) {
 
                     processedTextElement.textContent =
-                        phraseMatch.phrase;
+                        phraseMatches
+                            .map(match => match.phrase)
+                            .join(" + ");
 
                 }
 
 
-                const videoData =
-                    getFSLVideo(
-                        phraseMatch.dataset_id
-                    );
-
-
-                const animationElement =
-                    document.getElementById(
-                        "fsl-animation"
-                    );
-
+                // ------------------------------------------------
+                // CLEAR PREVIOUS VIDEOS
+                // ------------------------------------------------
 
                 if (animationElement) {
 
                     animationElement.innerHTML = "";
 
-
-                    if (videoData) {
-
-                        const video =
-                            document.createElement("video");
-
-
-                        video.src =
-                            videoData.video;
-
-
-                        video.controls =
-                            true;
-
-
-                        video.autoplay =
-                            true;
-
-
-                        video.loop =
-                            true;
-
-
-                        video.muted =
-                            true;
-
-
-                        video.playsInline =
-                            true;
-
-
-                        video.style.width =
-                            "100%";
-
-
-                        video.style.maxWidth =
-                            "400px";
-
-
-                        video.style.borderRadius =
-                            "10px";
-
-
-                        animationElement.appendChild(
-                            video
-                        );
-
-                    } else {
-
-                        animationElement.textContent =
-                            "FSL video not available.";
-
-                    }
-
                 }
 
+
+                // ------------------------------------------------
+                // DISPLAY EACH FSL VIDEO
+                // ------------------------------------------------
+
+                phraseMatches.forEach(
+                    (phraseMatch, index) => {
+
+                        const videoData =
+                            getFSLVideo(
+                                phraseMatch.dataset_id
+                            );
+
+
+                        if (
+                            animationElement &&
+                            videoData
+                        ) {
+
+                            const container =
+                                document.createElement(
+                                    "div"
+                                );
+
+
+                            container.style.marginBottom =
+                                "15px";
+
+
+                            const title =
+                                document.createElement(
+                                    "p"
+                                );
+
+
+                            title.innerHTML =
+                                `<strong>
+                                    ${index + 1}.
+                                    ${phraseMatch.phrase}
+                                </strong>`;
+
+
+                            const video =
+                                document.createElement(
+                                    "video"
+                                );
+
+
+                            video.src =
+                                videoData.video;
+
+
+                            video.controls =
+                                true;
+
+
+                            video.autoplay =
+                                index === 0;
+
+
+                            video.loop =
+                                true;
+
+
+                            video.muted =
+                                true;
+
+
+                            video.playsInline =
+                                true;
+
+
+                            video.style.width =
+                                "100%";
+
+
+                            video.style.maxWidth =
+                                "400px";
+
+
+                            video.style.borderRadius =
+                                "10px";
+
+
+                            container.appendChild(
+                                title
+                            );
+
+
+                            container.appendChild(
+                                video
+                            );
+
+
+                            animationElement.appendChild(
+                                container
+                            );
+
+                        }
+
+                    }
+                );
+
+
+                // ------------------------------------------------
+                // DISPLAY TRANSLATION DETAILS
+                // ------------------------------------------------
 
                 if (translationDetails) {
 
@@ -401,49 +463,129 @@ function startSpeechRecognition() {
 
                         <p>
                             <strong>
-                                ✓ Phrase Match Found
+                                ✓ ${phraseMatches.length}
+                                Phrase(s) Found
                             </strong>
                         </p>
 
-                        <p>
-                            Input:
-                            ${phraseMatch.phrase}
-                        </p>
+                    `;
 
-                        <p>
-                            FSL-105 Label:
-                            ${phraseMatch.dataset_label}
-                        </p>
 
-                        <p>
-                            Dataset ID:
-                            ${phraseMatch.dataset_id}
-                        </p>
+                    phraseMatches.forEach(
+                        (phraseMatch, index) => {
 
-                        <p>
-                            Category:
-                            ${phraseMatch.category}
-                        </p>
+                            const videoData =
+                                getFSLVideo(
+                                    phraseMatch.dataset_id
+                                );
 
-                        <p>
-                            Source:
-                            ${phraseMatch.source}
-                        </p>
 
+                            translationDetails.innerHTML += `
+
+                                <hr>
+
+                                <p>
+                                    <strong>
+                                        Phrase ${index + 1}:
+                                    </strong>
+
+                                    ${phraseMatch.phrase}
+                                </p>
+
+                                <p>
+                                    <strong>
+                                        FSL-105 Label:
+                                    </strong>
+
+                                    ${phraseMatch.dataset_label}
+                                </p>
+
+                                <p>
+                                    <strong>
+                                        Dataset ID:
+                                    </strong>
+
+                                    ${phraseMatch.dataset_id}
+                                </p>
+
+                                <p>
+                                    <strong>
+                                        Category:
+                                    </strong>
+
+                                    ${phraseMatch.category}
+                                </p>
+
+                                <p>
+                                    <strong>
+                                        Source:
+                                    </strong>
+
+                                    ${phraseMatch.source}
+                                </p>
+
+                                <p>
+                                    <strong>
+                                        Video:
+                                    </strong>
+
+                                    ${
+                                        videoData
+                                            ? "Available"
+                                            : "Not available"
+                                    }
+                                </p>
+
+                            `;
+
+                        }
+                    );
+
+                }
+
+
+                // ------------------------------------------------
+                // DEBUGGING INFORMATION
+                // ------------------------------------------------
+
+                console.log(
+                    "Phrase Matches:",
+                    phraseMatches
+                );
+
+
+            } else {
+
+                if (processedTextElement) {
+
+                    processedTextElement.textContent =
+                        "No FSL phrase mapping found.";
+
+                }
+
+
+                if (animationElement) {
+
+                    animationElement.innerHTML =
+                        "No FSL translation available.";
+
+                }
+
+
+                if (translationDetails) {
+
+                    translationDetails.innerHTML = `
+                        <p>
+                            No matching FSL phrase found.
+                        </p>
                     `;
 
                 }
 
 
                 console.log(
-                    "Phrase Match:",
-                    phraseMatch
-                );
-
-
-                console.log(
-                    "Video:",
-                    videoData
+                    "No phrase mappings found for:",
+                    finalTranscript
                 );
 
             }
