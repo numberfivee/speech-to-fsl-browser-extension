@@ -105,27 +105,69 @@ function findPhraseMappings(text) {
 
     const normalizedText = normalizeText(text);
 
-    const phrases = Object.keys(phraseMappings)
-        .sort((a, b) => b.length - a.length);
+    const phrases = Object.keys(phraseMappings);
 
     const matches = [];
-    let remainingText = normalizedText;
 
     for (const phrase of phrases) {
 
-        if (remainingText.includes(phrase)) {
+        const normalizedPhrase =
+            normalizeText(phrase);
+
+        if (!normalizedPhrase) {
+            continue;
+        }
+
+        // Escape special characters for use in RegExp
+        const escapedPhrase =
+            normalizedPhrase.replace(
+                /[.*+?^${}()|[\]\\]/g,
+                "\\$&"
+            );
+
+        // Match the phrase as a complete word/phrase
+        const regex = new RegExp(
+            `(?:^|\\s)${escapedPhrase}(?=\\s|$)`,
+            "g"
+        );
+
+        let match;
+
+        while (
+            (match = regex.exec(normalizedText)) !== null
+        ) {
+
+            // Remove the leading space from the position
+            const leadingSpace =
+                match[0].startsWith(" ")
+                    ? 1
+                    : 0;
+
+            const position =
+                match.index + leadingSpace;
 
             matches.push({
                 phrase: phrase,
+                position: position,
                 ...phraseMappings[phrase]
             });
-
-            remainingText = remainingText.replace(
-                phrase,
-                " "
-            );
         }
     }
+
+    // Sort according to the original speech position
+    matches.sort((a, b) => {
+
+        if (a.position !== b.position) {
+            return a.position - b.position;
+        }
+
+        // If two phrases start at the same position,
+        // prioritize the longer phrase.
+        return (
+            b.phrase.length -
+            a.phrase.length
+        );
+    });
 
     return matches;
 }
