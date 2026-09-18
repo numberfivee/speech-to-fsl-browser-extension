@@ -107,8 +107,9 @@ function findPhraseMappings(text) {
 
     const phrases = Object.keys(phraseMappings);
 
-    const matches = [];
+    const candidates = [];
 
+    // Find every possible phrase match
     for (const phrase of phrases) {
 
         const normalizedPhrase =
@@ -118,14 +119,14 @@ function findPhraseMappings(text) {
             continue;
         }
 
-        // Escape special characters for use in RegExp
+        // Escape special characters for RegExp
         const escapedPhrase =
             normalizedPhrase.replace(
                 /[.*+?^${}()|[\]\\]/g,
                 "\\$&"
             );
 
-        // Match the phrase as a complete word/phrase
+        // Match complete words/phrases only
         const regex = new RegExp(
             `(?:^|\\s)${escapedPhrase}(?=\\s|$)`,
             "g"
@@ -137,7 +138,6 @@ function findPhraseMappings(text) {
             (match = regex.exec(normalizedText)) !== null
         ) {
 
-            // Remove the leading space from the position
             const leadingSpace =
                 match[0].startsWith(" ")
                     ? 1
@@ -146,28 +146,45 @@ function findPhraseMappings(text) {
             const position =
                 match.index + leadingSpace;
 
-            matches.push({
+            candidates.push({
                 phrase: phrase,
                 position: position,
+                end:
+                    position +
+                    normalizedPhrase.length,
                 ...phraseMappings[phrase]
             });
         }
     }
 
-    // Sort according to the original speech position
-    matches.sort((a, b) => {
+    // First sort by position.
+    // If phrases start at the same position,
+    // prefer the longer phrase.
+    candidates.sort((a, b) => {
 
         if (a.position !== b.position) {
             return a.position - b.position;
         }
 
-        // If two phrases start at the same position,
-        // prioritize the longer phrase.
         return (
             b.phrase.length -
             a.phrase.length
         );
     });
+
+    // Remove overlapping matches
+    const matches = [];
+    let lastEnd = -1;
+
+    for (const candidate of candidates) {
+
+        if (candidate.position >= lastEnd) {
+
+            matches.push(candidate);
+
+            lastEnd = candidate.end;
+        }
+    }
 
     return matches;
 }
