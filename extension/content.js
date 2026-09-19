@@ -54,6 +54,37 @@ chrome.runtime.onMessage.addListener((message) => {
 
 let recognition = null;
 
+let isTranslationActive = false;
+
+let accumulatedFinalTranscript = "";
+
+let fslPlaybackState = {
+    phraseMatches: [],
+    phraseKeys: [],
+    currentIndex: -1,
+    mainVideo: null,
+    currentPhrase: null,
+    queueItems: [],
+    initialized: false
+};
+
+
+function resetTranslationState() {
+
+    accumulatedFinalTranscript = "";
+
+    fslPlaybackState = {
+        phraseMatches: [],
+        phraseKeys: [],
+        currentIndex: -1,
+        mainVideo: null,
+        currentPhrase: null,
+        queueItems: [],
+        initialized: false
+    };
+
+}
+
 
 function createTranslatorWidget() {
 
@@ -171,6 +202,274 @@ function removeTranslatorWidget() {
 }
 
 
+function initializeFSLPlayer() {
+
+    const animationElement =
+        document.getElementById(
+            "fsl-animation"
+        );
+
+    if (!animationElement) {
+        return;
+    }
+
+    // Do not recreate the player
+    if (fslPlaybackState.initialized) {
+        return;
+    }
+
+    animationElement.innerHTML = "";
+
+    animationElement.style.display = "block";
+    animationElement.style.width = "100%";
+    animationElement.style.boxSizing =
+        "border-box";
+
+
+    // Main video
+    const mainVideo =
+        document.createElement("video");
+
+    mainVideo.controls = true;
+    mainVideo.muted = true;
+    mainVideo.playsInline = true;
+
+    mainVideo.style.display = "block";
+    mainVideo.style.width = "100%";
+    mainVideo.style.maxWidth = "400px";
+    mainVideo.style.height = "auto";
+    mainVideo.style.maxHeight = "300px";
+    mainVideo.style.objectFit = "contain";
+    mainVideo.style.boxSizing = "border-box";
+    mainVideo.style.borderRadius = "10px";
+    mainVideo.style.margin =
+        "0 auto 10px auto";
+
+    animationElement.appendChild(
+        mainVideo
+    );
+
+
+    // Current phrase
+    const currentPhrase =
+        document.createElement("div");
+
+    currentPhrase.style.display = "block";
+    currentPhrase.style.width = "100%";
+    currentPhrase.style.boxSizing =
+        "border-box";
+    currentPhrase.style.textAlign = "center";
+    currentPhrase.style.fontWeight = "bold";
+    currentPhrase.style.marginBottom =
+        "12px";
+
+    animationElement.appendChild(
+        currentPhrase
+    );
+
+
+    // Queue title
+    const queueTitle =
+        document.createElement("div");
+
+    queueTitle.textContent =
+        "Phrase Sequence";
+
+    queueTitle.style.display = "block";
+    queueTitle.style.width = "100%";
+    queueTitle.style.boxSizing =
+        "border-box";
+    queueTitle.style.fontWeight = "bold";
+    queueTitle.style.marginBottom =
+        "6px";
+
+    animationElement.appendChild(
+        queueTitle
+    );
+
+
+    // Phrase queue
+    const phraseQueue =
+        document.createElement("div");
+
+    phraseQueue.style.display = "block";
+    phraseQueue.style.width = "100%";
+    phraseQueue.style.maxWidth = "400px";
+    phraseQueue.style.maxHeight = "150px";
+    phraseQueue.style.overflowY = "auto";
+    phraseQueue.style.boxSizing =
+        "border-box";
+    phraseQueue.style.border =
+        "1px solid #ddd";
+    phraseQueue.style.borderRadius =
+        "8px";
+    phraseQueue.style.padding = "6px";
+    phraseQueue.style.margin = "0 auto";
+
+    animationElement.appendChild(
+        phraseQueue
+    );
+
+
+    fslPlaybackState.mainVideo =
+        mainVideo;
+
+    fslPlaybackState.currentPhrase =
+        currentPhrase;
+
+    fslPlaybackState.phraseQueue =
+        phraseQueue;
+
+    fslPlaybackState.initialized =
+        true;
+
+
+    // Move to the next phrase
+    mainVideo.addEventListener(
+        "ended",
+        () => {
+
+            const nextIndex =
+                fslPlaybackState.currentIndex +
+                1;
+
+            playPhrase(nextIndex);
+
+        }
+    );
+
+}
+
+
+function playPhrase(index) {
+
+    const phraseMatches =
+        fslPlaybackState.phraseMatches;
+
+    const mainVideo =
+        fslPlaybackState.mainVideo;
+
+    const currentPhrase =
+        fslPlaybackState.currentPhrase;
+
+    const queueItems =
+        fslPlaybackState.queueItems;
+
+
+    if (!mainVideo) {
+        return;
+    }
+
+
+    // No more phrases
+    if (
+        index >= phraseMatches.length
+    ) {
+
+        currentPhrase.textContent =
+            "✓ Translation complete";
+
+        fslPlaybackState.currentIndex =
+            phraseMatches.length - 1;
+
+        return;
+    }
+
+
+    const phraseMatch =
+        phraseMatches[index];
+
+
+    const videoData =
+        getFSLVideo(
+            phraseMatch.dataset_id
+        );
+
+
+    // Skip phrases without videos
+    if (!videoData) {
+
+        if (queueItems[index]) {
+
+            queueItems[index].textContent =
+                `${index + 1}. ${phraseMatch.phrase} — Video unavailable`;
+
+        }
+
+        playPhrase(index + 1);
+
+        return;
+    }
+
+
+    fslPlaybackState.currentIndex =
+        index;
+
+
+    // Current phrase
+    currentPhrase.textContent =
+        `▶ ${phraseMatch.phrase}`;
+
+
+    // Update queue
+    queueItems.forEach(
+        (item, itemIndex) => {
+
+            if (itemIndex < index) {
+
+                item.textContent =
+                    `✓ ${itemIndex + 1}. ${phraseMatches[itemIndex].phrase}`;
+
+            } else if (
+                itemIndex === index
+            ) {
+
+                item.textContent =
+                    `▶ ${itemIndex + 1}. ${phraseMatches[itemIndex].phrase}`;
+
+            } else {
+
+                item.textContent =
+                    `○ ${itemIndex + 1}. ${phraseMatches[itemIndex].phrase}`;
+
+            }
+
+        }
+    );
+
+
+    // Scroll current phrase into view
+    if (queueItems[index]) {
+
+        queueItems[index].scrollIntoView({
+            behavior: "smooth",
+            block: "nearest"
+        });
+
+    }
+
+
+    // Change video
+    mainVideo.src =
+        videoData.video;
+
+    mainVideo.load();
+
+
+    // Play
+    mainVideo.play()
+        .catch(error => {
+
+            console.error(
+                "Unable to play FSL video:",
+                error
+            );
+
+        });
+
+}
+
+
 function startSpeechRecognition() {
 
     const SpeechRecognition =
@@ -207,6 +506,9 @@ function startSpeechRecognition() {
         return;
     }
 
+    resetTranslationState();
+
+    isTranslationActive = true;
 
     recognition =
         new SpeechRecognition();
@@ -245,8 +547,7 @@ function startSpeechRecognition() {
     recognition.onresult = (event) => {
 
         let interimTranscript = "";
-
-        let finalTranscript = "";
+        let newFinalTranscript = "";
 
 
         for (
@@ -264,7 +565,7 @@ function startSpeechRecognition() {
                 event.results[i].isFinal
             ) {
 
-                finalTranscript +=
+                newFinalTranscript +=
                     transcript;
 
             } else {
@@ -277,6 +578,22 @@ function startSpeechRecognition() {
         }
 
 
+        // Add only newly finalized speech
+        if (newFinalTranscript) {
+
+            accumulatedFinalTranscript +=
+                " " +
+                newFinalTranscript;
+
+            accumulatedFinalTranscript =
+                accumulatedFinalTranscript
+                    .replace(/\s+/g, " ")
+                    .trim();
+
+        }
+
+
+        // Display accumulated speech + current interim speech
         const speechElement =
             document.getElementById(
                 "recognized-speech"
@@ -285,291 +602,84 @@ function startSpeechRecognition() {
 
         if (speechElement) {
 
+            const displayText =
+                (
+                    accumulatedFinalTranscript +
+                    " " +
+                    interimTranscript
+                )
+                .replace(/\s+/g, " ")
+                .trim();
+
+
             speechElement.textContent =
-                finalTranscript ||
-                interimTranscript;
+                displayText ||
+                "Listening...";
 
         }
 
 
-        if (finalTranscript) {
+        // Only translate finalized speech
+        if (
+            accumulatedFinalTranscript
+        ) {
 
             const phraseMatches =
                 findPhraseMappings(
-                    finalTranscript
+                    accumulatedFinalTranscript
                 );
+
 
             const processedTextElement =
                 document.getElementById(
                     "processed-text"
                 );
 
+
             const translationDetails =
                 document.getElementById(
                     "translation-details"
                 );
 
-            const animationElement =
-                document.getElementById(
-                    "fsl-animation"
-                );
 
-            if (phraseMatches.length > 0) {
+            if (
+                phraseMatches.length > 0
+            ) {
 
-                // Display recognized phrases in order
-                if (processedTextElement) {
+                // Display all recognized phrases
+                if (
+                    processedTextElement
+                ) {
+
                     processedTextElement.textContent =
                         phraseMatches
-                            .map(match => match.phrase)
+                            .map(
+                                match =>
+                                    match.phrase
+                            )
                             .join(" + ");
+
                 }
 
-                // Create sequential FSL video player
-                if (animationElement) {
 
-                    animationElement.innerHTML = "";
+                // Update persistent FSL queue
+                updateFSLTranslation(
+                    phraseMatches
+                );
 
-                    animationElement.style.display = "block";
-                    animationElement.style.width = "100%";
-                    animationElement.style.boxSizing = "border-box";
 
-                    // Main video
-                    const mainVideo =
-                        document.createElement("video");
-
-                    mainVideo.controls = true;
-                    mainVideo.muted = true;
-                    mainVideo.playsInline = true;
-
-                    mainVideo.style.display = "block";
-                    mainVideo.style.width = "100%";
-                    mainVideo.style.maxWidth = "400px";
-                    mainVideo.style.height = "auto";
-                    mainVideo.style.maxHeight = "300px";
-                    mainVideo.style.objectFit = "contain";
-                    mainVideo.style.boxSizing = "border-box";
-                    mainVideo.style.borderRadius = "10px";
-                    mainVideo.style.margin = "0 auto 10px auto";
-
-                    animationElement.appendChild(
-                        mainVideo
-                    );
-
-
-                    // Currently playing phrase
-                    const currentPhrase =
-                        document.createElement("div");
-
-                    currentPhrase.style.display = "block";
-                    currentPhrase.style.width = "100%";
-                    currentPhrase.style.boxSizing = "border-box";
-                    currentPhrase.style.textAlign = "center";
-                    currentPhrase.style.fontWeight = "bold";
-                    currentPhrase.style.marginBottom = "12px";
-
-                    animationElement.appendChild(
-                        currentPhrase
-                    );
-
-
-                    // Phrase sequence title
-                    const queueTitle =
-                        document.createElement("div");
-
-                    queueTitle.style.display = "block";
-                    queueTitle.style.width = "100%";
-                    queueTitle.style.boxSizing = "border-box";
-                    queueTitle.style.fontWeight = "bold";
-                    queueTitle.style.marginBottom = "6px";
-
-                    animationElement.appendChild(
-                        queueTitle
-                    );
-
-
-                    // Phrase queue
-                    const phraseQueue =
-                        document.createElement("div");
-
-                    phraseQueue.style.display = "block";
-                    phraseQueue.style.width = "100%";
-                    phraseQueue.style.maxWidth = "400px";
-                    phraseQueue.style.maxHeight = "150px";
-                    phraseQueue.style.overflowY = "auto";
-                    phraseQueue.style.boxSizing = "border-box";
-                    phraseQueue.style.border = "1px solid #ddd";
-                    phraseQueue.style.borderRadius = "8px";
-                    phraseQueue.style.padding = "6px";
-                    phraseQueue.style.margin = "0 auto";
-
-                    animationElement.appendChild(
-                        phraseQueue
-                    );
-
-
-                    // Store queue items
-                    const queueItems = [];
-
-
-                    // Create queue
-                    phraseMatches.forEach(
-                        (phraseMatch, index) => {
-
-                            const item =
-                                document.createElement("div");
-
-                            item.textContent =
-                                `${index + 1}. ${phraseMatch.phrase}`;
-
-                            item.style.padding =
-                                "8px";
-
-                            item.style.borderRadius =
-                                "5px";
-
-                            item.style.marginBottom =
-                                "3px";
-
-                            item.style.fontSize =
-                                "14px";
-
-                            phraseQueue.appendChild(
-                                item
-                            );
-
-                            queueItems.push(item);
-                        }
-                    );
-
-
-                    // Keep track of the currently playing phrase
-                    let currentIndex = 0;
-
-
-                    function playPhrase(index) {
-
-                        // No more phrases
-                        if (
-                            index >= phraseMatches.length
-                        ) {
-
-                            currentPhrase.textContent =
-                                "✓ Translation complete";
-
-                            return;
-                        }
-
-
-                        currentIndex = index;
-
-
-                        const phraseMatch =
-                            phraseMatches[index];
-
-
-                        const videoData =
-                            getFSLVideo(
-                                phraseMatch.dataset_id
-                            );
-
-
-                        // If video is unavailable,
-                        // skip to the next phrase
-                        if (!videoData) {
-
-                            queueItems[index].textContent =
-                                `${index + 1}. ${phraseMatch.phrase} — Video unavailable`;
-
-                            playPhrase(index + 1);
-
-                            return;
-                        }
-
-
-                        // Update current phrase
-                        currentPhrase.textContent =
-                            `▶ ${phraseMatch.phrase}`;
-
-
-                        // Update queue
-                        queueItems.forEach(
-                            (item, itemIndex) => {
-
-                                if (itemIndex < index) {
-
-                                    item.textContent =
-                                        `✓ ${itemIndex + 1}. ${phraseMatches[itemIndex].phrase}`;
-
-                                } else if (
-                                    itemIndex === index
-                                ) {
-
-                                    item.textContent =
-                                        `▶ ${itemIndex + 1}. ${phraseMatches[itemIndex].phrase}`;
-
-                                } else {
-
-                                    item.textContent =
-                                        `○ ${itemIndex + 1}. ${phraseMatches[itemIndex].phrase}`;
-                                }
-                            }
-                        );
-
-
-                        // Scroll current phrase into view
-                        queueItems[index].scrollIntoView({
-                            behavior: "smooth",
-                            block: "nearest"
-                        });
-
-
-                        // Change the main video
-                        mainVideo.src =
-                            videoData.video;
-
-
-                        // Load the new video
-                        mainVideo.load();
-
-
-                        // Play the video
-                        mainVideo.play()
-                            .catch(error => {
-
-                                console.error(
-                                    "Unable to play FSL video:",
-                                    error
-                                );
-
-                            });
-                    }
-
-
-                    // When the current video finishes,
-                    // play the next phrase
-                    mainVideo.addEventListener(
-                        "ended",
-                        () => {
-
-                            playPhrase(
-                                currentIndex + 1
-                            );
-
-                        }
-                    );
-
-
-                    // Start the first phrase
-                    playPhrase(0);
-                }
-
-                // Display translation information
-                if (translationDetails) {
+                // Display translation details
+                if (
+                    translationDetails
+                ) {
 
                     translationDetails.innerHTML =
                         phraseMatches
                             .map(
-                                (phraseMatch, index) => {
+                                (
+                                    phraseMatch,
+                                    index
+                                ) => {
 
                                     return `
                                         <div style="margin-bottom: 10px;">
@@ -605,40 +715,27 @@ function startSpeechRecognition() {
                                             </p>
                                         </div>
                                     `;
+
                                 }
                             )
                             .join("");
+
                 }
+
+
+                console.log(
+                    "Accumulated Speech:",
+                    accumulatedFinalTranscript
+                );
+
 
                 console.log(
                     "Phrase Matches:",
                     phraseMatches
                 );
 
-            } else {
-
-                if (processedTextElement) {
-                    processedTextElement.textContent =
-                        "No matching FSL phrase found.";
-                }
-
-                if (animationElement) {
-                    animationElement.innerHTML =
-                        "FSL video not available.";
-                }
-
-                if (translationDetails) {
-                    translationDetails.innerHTML = `
-                        <p>
-                            No FSL phrase mapping found.
-                        </p>
-                    `;
-                }
-
-                console.log(
-                    "No FSL phrase mapping found."
-                );
             }
+
         }
 
     };
@@ -673,8 +770,45 @@ function startSpeechRecognition() {
     recognition.onend = () => {
 
         console.log(
-            "Speech recognition stopped."
+            "Speech recognition session ended."
         );
+
+
+        // Only restart if the translator
+        // is still supposed to be active
+        if (isTranslationActive) {
+
+            console.log(
+                "Restarting speech recognition..."
+            );
+
+
+            setTimeout(() => {
+
+                if (
+                    !isTranslationActive ||
+                    !recognition
+                ) {
+                    return;
+                }
+
+
+                try {
+
+                    recognition.start();
+
+                } catch (error) {
+
+                    console.error(
+                        "Unable to restart speech recognition:",
+                        error
+                    );
+
+                }
+
+            }, 300);
+
+        }
 
     };
 
@@ -686,11 +820,157 @@ function startSpeechRecognition() {
 
 function stopSpeechRecognition() {
 
+    isTranslationActive = false;
+
+
     if (recognition) {
 
         recognition.stop();
 
         recognition = null;
+
+    }
+
+
+    resetTranslationState();
+
+}
+
+
+function updateFSLTranslation(
+    phraseMatches
+) {
+
+    if (
+        !phraseMatches ||
+        phraseMatches.length === 0
+    ) {
+        return;
+    }
+
+
+    initializeFSLPlayer();
+
+
+    // Find only NEW phrase matches
+    const newMatches = [];
+
+
+    phraseMatches.forEach(
+        (phraseMatch) => {
+
+            const key =
+                `${phraseMatch.position}|` +
+                `${phraseMatch.phrase}|` +
+                `${phraseMatch.dataset_id}`;
+
+
+            if (
+                !fslPlaybackState.phraseKeys.includes(
+                    key
+                )
+            ) {
+
+                fslPlaybackState.phraseKeys.push(
+                    key
+                );
+
+                newMatches.push(
+                    phraseMatch
+                );
+
+            }
+
+        }
+    );
+
+
+    if (newMatches.length === 0) {
+
+        return;
+
+    }
+
+
+    // Add new phrases to existing queue
+    fslPlaybackState.phraseMatches.push(
+        ...newMatches
+    );
+
+
+    const phraseQueue =
+        fslPlaybackState.phraseQueue;
+
+
+    // Create queue items only for new phrases
+    newMatches.forEach(
+        (phraseMatch) => {
+
+            const index =
+                fslPlaybackState.queueItems.length;
+
+
+            const item =
+                document.createElement("div");
+
+
+            item.textContent =
+                `${index + 1}. ${phraseMatch.phrase}`;
+
+
+            item.style.padding =
+                "8px";
+
+            item.style.borderRadius =
+                "5px";
+
+            item.style.marginBottom =
+                "3px";
+
+            item.style.fontSize =
+                "14px";
+
+
+            phraseQueue.appendChild(
+                item
+            );
+
+
+            fslPlaybackState.queueItems.push(
+                item
+            );
+
+        }
+    );
+
+
+    // Start playback if nothing is currently playing
+    const mainVideo =
+        fslPlaybackState.mainVideo;
+
+
+    if (!mainVideo) {
+        return;
+    }
+
+
+    if (
+        mainVideo.paused ||
+        mainVideo.ended
+    ) {
+
+        const nextIndex =
+            fslPlaybackState.currentIndex + 1;
+
+
+        if (
+            nextIndex <
+            fslPlaybackState.phraseMatches.length
+        ) {
+
+            playPhrase(nextIndex);
+
+        }
 
     }
 
