@@ -299,63 +299,173 @@ function startSpeechRecognition() {
                     finalTranscript
                 );
 
-
             const processedTextElement =
                 document.getElementById(
                     "processed-text"
                 );
-
 
             const translationDetails =
                 document.getElementById(
                     "translation-details"
                 );
 
-
             const animationElement =
                 document.getElementById(
                     "fsl-animation"
                 );
 
-
-            // ----------------------------------------------------
-            // CHECK IF PHRASES WERE FOUND
-            // ----------------------------------------------------
-
             if (phraseMatches.length > 0) {
 
-
-                // ------------------------------------------------
-                // DISPLAY ALL MATCHED PHRASES
-                // ------------------------------------------------
-
+                // Display recognized phrases in order
                 if (processedTextElement) {
-
                     processedTextElement.textContent =
                         phraseMatches
                             .map(match => match.phrase)
                             .join(" + ");
-
                 }
 
-
-                // ------------------------------------------------
-                // CLEAR PREVIOUS VIDEOS
-                // ------------------------------------------------
-
+                // Create sequential FSL video player
                 if (animationElement) {
 
                     animationElement.innerHTML = "";
 
-                }
+                    animationElement.style.display = "block";
+                    animationElement.style.width = "100%";
+                    animationElement.style.boxSizing = "border-box";
+
+                    // Main video
+                    const mainVideo =
+                        document.createElement("video");
+
+                    mainVideo.controls = true;
+                    mainVideo.muted = true;
+                    mainVideo.playsInline = true;
+
+                    mainVideo.style.display = "block";
+                    mainVideo.style.width = "100%";
+                    mainVideo.style.maxWidth = "400px";
+                    mainVideo.style.height = "auto";
+                    mainVideo.style.maxHeight = "300px";
+                    mainVideo.style.objectFit = "contain";
+                    mainVideo.style.boxSizing = "border-box";
+                    mainVideo.style.borderRadius = "10px";
+                    mainVideo.style.margin = "0 auto 10px auto";
+
+                    animationElement.appendChild(
+                        mainVideo
+                    );
 
 
-                // ------------------------------------------------
-                // DISPLAY EACH FSL VIDEO
-                // ------------------------------------------------
+                    // Currently playing phrase
+                    const currentPhrase =
+                        document.createElement("div");
 
-                phraseMatches.forEach(
-                    (phraseMatch, index) => {
+                    currentPhrase.style.display = "block";
+                    currentPhrase.style.width = "100%";
+                    currentPhrase.style.boxSizing = "border-box";
+                    currentPhrase.style.textAlign = "center";
+                    currentPhrase.style.fontWeight = "bold";
+                    currentPhrase.style.marginBottom = "12px";
+
+                    animationElement.appendChild(
+                        currentPhrase
+                    );
+
+
+                    // Phrase sequence title
+                    const queueTitle =
+                        document.createElement("div");
+
+                    queueTitle.style.display = "block";
+                    queueTitle.style.width = "100%";
+                    queueTitle.style.boxSizing = "border-box";
+                    queueTitle.style.fontWeight = "bold";
+                    queueTitle.style.marginBottom = "6px";
+
+                    animationElement.appendChild(
+                        queueTitle
+                    );
+
+
+                    // Phrase queue
+                    const phraseQueue =
+                        document.createElement("div");
+
+                    phraseQueue.style.display = "block";
+                    phraseQueue.style.width = "100%";
+                    phraseQueue.style.maxWidth = "400px";
+                    phraseQueue.style.maxHeight = "150px";
+                    phraseQueue.style.overflowY = "auto";
+                    phraseQueue.style.boxSizing = "border-box";
+                    phraseQueue.style.border = "1px solid #ddd";
+                    phraseQueue.style.borderRadius = "8px";
+                    phraseQueue.style.padding = "6px";
+                    phraseQueue.style.margin = "0 auto";
+
+                    animationElement.appendChild(
+                        phraseQueue
+                    );
+
+
+                    // Store queue items
+                    const queueItems = [];
+
+
+                    // Create queue
+                    phraseMatches.forEach(
+                        (phraseMatch, index) => {
+
+                            const item =
+                                document.createElement("div");
+
+                            item.textContent =
+                                `${index + 1}. ${phraseMatch.phrase}`;
+
+                            item.style.padding =
+                                "8px";
+
+                            item.style.borderRadius =
+                                "5px";
+
+                            item.style.marginBottom =
+                                "3px";
+
+                            item.style.fontSize =
+                                "14px";
+
+                            phraseQueue.appendChild(
+                                item
+                            );
+
+                            queueItems.push(item);
+                        }
+                    );
+
+
+                    // Keep track of the currently playing phrase
+                    let currentIndex = 0;
+
+
+                    function playPhrase(index) {
+
+                        // No more phrases
+                        if (
+                            index >= phraseMatches.length
+                        ) {
+
+                            currentPhrase.textContent =
+                                "✓ Translation complete";
+
+                            return;
+                        }
+
+
+                        currentIndex = index;
+
+
+                        const phraseMatch =
+                            phraseMatches[index];
+
 
                         const videoData =
                             getFSLVideo(
@@ -363,233 +473,172 @@ function startSpeechRecognition() {
                             );
 
 
-                        if (
-                            animationElement &&
-                            videoData
-                        ) {
+                        // If video is unavailable,
+                        // skip to the next phrase
+                        if (!videoData) {
 
-                            const container =
-                                document.createElement(
-                                    "div"
-                                );
+                            queueItems[index].textContent =
+                                `${index + 1}. ${phraseMatch.phrase} — Video unavailable`;
 
+                            playPhrase(index + 1);
 
-                            container.style.marginBottom =
-                                "15px";
-
-
-                            const title =
-                                document.createElement(
-                                    "p"
-                                );
-
-
-                            title.innerHTML =
-                                `<strong>
-                                    ${index + 1}.
-                                    ${phraseMatch.phrase}
-                                </strong>`;
-
-
-                            const video =
-                                document.createElement(
-                                    "video"
-                                );
-
-
-                            video.src =
-                                videoData.video;
-
-
-                            video.controls =
-                                true;
-
-
-                            video.autoplay =
-                                index === 0;
-
-
-                            video.loop =
-                                true;
-
-
-                            video.muted =
-                                true;
-
-
-                            video.playsInline =
-                                true;
-
-
-                            video.style.width =
-                                "100%";
-
-
-                            video.style.maxWidth =
-                                "400px";
-
-
-                            video.style.borderRadius =
-                                "10px";
-
-
-                            container.appendChild(
-                                title
-                            );
-
-
-                            container.appendChild(
-                                video
-                            );
-
-
-                            animationElement.appendChild(
-                                container
-                            );
-
+                            return;
                         }
 
-                    }
-                );
+
+                        // Update current phrase
+                        currentPhrase.textContent =
+                            `▶ ${phraseMatch.phrase}`;
 
 
-                // ------------------------------------------------
-                // DISPLAY TRANSLATION DETAILS
-                // ------------------------------------------------
+                        // Update queue
+                        queueItems.forEach(
+                            (item, itemIndex) => {
 
-                if (translationDetails) {
+                                if (itemIndex < index) {
 
-                    translationDetails.innerHTML = `
+                                    item.textContent =
+                                        `✓ ${itemIndex + 1}. ${phraseMatches[itemIndex].phrase}`;
 
-                        <p>
-                            <strong>
-                                ✓ ${phraseMatches.length}
-                                Phrase(s) Found
-                            </strong>
-                        </p>
+                                } else if (
+                                    itemIndex === index
+                                ) {
 
-                    `;
+                                    item.textContent =
+                                        `▶ ${itemIndex + 1}. ${phraseMatches[itemIndex].phrase}`;
+
+                                } else {
+
+                                    item.textContent =
+                                        `○ ${itemIndex + 1}. ${phraseMatches[itemIndex].phrase}`;
+                                }
+                            }
+                        );
 
 
-                    phraseMatches.forEach(
-                        (phraseMatch, index) => {
+                        // Scroll current phrase into view
+                        queueItems[index].scrollIntoView({
+                            behavior: "smooth",
+                            block: "nearest"
+                        });
 
-                            const videoData =
-                                getFSLVideo(
-                                    phraseMatch.dataset_id
+
+                        // Change the main video
+                        mainVideo.src =
+                            videoData.video;
+
+
+                        // Load the new video
+                        mainVideo.load();
+
+
+                        // Play the video
+                        mainVideo.play()
+                            .catch(error => {
+
+                                console.error(
+                                    "Unable to play FSL video:",
+                                    error
                                 );
 
+                            });
+                    }
 
-                            translationDetails.innerHTML += `
 
-                                <hr>
+                    // When the current video finishes,
+                    // play the next phrase
+                    mainVideo.addEventListener(
+                        "ended",
+                        () => {
 
-                                <p>
-                                    <strong>
-                                        Phrase ${index + 1}:
-                                    </strong>
-
-                                    ${phraseMatch.phrase}
-                                </p>
-
-                                <p>
-                                    <strong>
-                                        FSL-105 Label:
-                                    </strong>
-
-                                    ${phraseMatch.dataset_label}
-                                </p>
-
-                                <p>
-                                    <strong>
-                                        Dataset ID:
-                                    </strong>
-
-                                    ${phraseMatch.dataset_id}
-                                </p>
-
-                                <p>
-                                    <strong>
-                                        Category:
-                                    </strong>
-
-                                    ${phraseMatch.category}
-                                </p>
-
-                                <p>
-                                    <strong>
-                                        Source:
-                                    </strong>
-
-                                    ${phraseMatch.source}
-                                </p>
-
-                                <p>
-                                    <strong>
-                                        Video:
-                                    </strong>
-
-                                    ${
-                                        videoData
-                                            ? "Available"
-                                            : "Not available"
-                                    }
-                                </p>
-
-                            `;
+                            playPhrase(
+                                currentIndex + 1
+                            );
 
                         }
                     );
 
+
+                    // Start the first phrase
+                    playPhrase(0);
                 }
 
+                // Display translation information
+                if (translationDetails) {
 
-                // ------------------------------------------------
-                // DEBUGGING INFORMATION
-                // ------------------------------------------------
+                    translationDetails.innerHTML =
+                        phraseMatches
+                            .map(
+                                (phraseMatch, index) => {
+
+                                    return `
+                                        <div style="margin-bottom: 10px;">
+                                            <p>
+                                                <strong>
+                                                    ✓ Phrase ${index + 1}
+                                                </strong>
+                                            </p>
+
+                                            <p>
+                                                Input:
+                                                ${phraseMatch.phrase}
+                                            </p>
+
+                                            <p>
+                                                FSL-105 Label:
+                                                ${phraseMatch.dataset_label}
+                                            </p>
+
+                                            <p>
+                                                Dataset ID:
+                                                ${phraseMatch.dataset_id}
+                                            </p>
+
+                                            <p>
+                                                Category:
+                                                ${phraseMatch.category}
+                                            </p>
+
+                                            <p>
+                                                Source:
+                                                ${phraseMatch.source}
+                                            </p>
+                                        </div>
+                                    `;
+                                }
+                            )
+                            .join("");
+                }
 
                 console.log(
                     "Phrase Matches:",
                     phraseMatches
                 );
 
-
             } else {
 
                 if (processedTextElement) {
-
                     processedTextElement.textContent =
-                        "No FSL phrase mapping found.";
-
+                        "No matching FSL phrase found.";
                 }
-
 
                 if (animationElement) {
-
                     animationElement.innerHTML =
-                        "No FSL translation available.";
-
+                        "FSL video not available.";
                 }
-
 
                 if (translationDetails) {
-
                     translationDetails.innerHTML = `
                         <p>
-                            No matching FSL phrase found.
+                            No FSL phrase mapping found.
                         </p>
                     `;
-
                 }
 
-
                 console.log(
-                    "No phrase mappings found for:",
-                    finalTranscript
+                    "No FSL phrase mapping found."
                 );
-
             }
-
         }
 
     };
