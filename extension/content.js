@@ -7,7 +7,8 @@ chrome.runtime.onMessage.addListener((message) => {
         Promise.all([
             loadDictionary(),
             loadPhraseMappings(),
-            loadVideoLookup()
+            loadVideoLookup(),
+            loadAlphabet()
         ])
         .then(() => {
 
@@ -52,6 +53,15 @@ chrome.runtime.onMessage.addListener((message) => {
 });
 
 
+/*
+ * Accumulated transcript is capped so a long lecture doesn't grow
+ * an unbounded string / unbounded DOM queue. When it's trimmed we
+ * also drop matched sequence items that fall before the new start,
+ * which is handled naturally by updateFSLTranslation's key diffing
+ * as long as we trim on a phrase boundary (a space).
+ */
+const MAX_TRANSCRIPT_CHARS = 800;
+
 let recognition = null;
 
 let isTranslationActive = false;
@@ -65,7 +75,10 @@ let fslPlaybackState = {
     mainVideo: null,
     currentPhrase: null,
     queueItems: [],
-    initialized: false
+    initialized: false,
+    /* fingerspelling sub-state */
+    fingerspellLetters: null,
+    fingerspellIndex: -1
 };
 
 
@@ -80,7 +93,9 @@ function resetTranslationState() {
         mainVideo: null,
         currentPhrase: null,
         queueItems: [],
-        initialized: false
+        initialized: false,
+        fingerspellLetters: null,
+        fingerspellIndex: -1
     };
 
 }
@@ -197,6 +212,37 @@ function removeTranslatorWidget() {
 
         widget.remove();
 
+    }
+
+}
+
+
+/*
+ * A single label for any queue-item type: a matched phrase,
+ * a dictionary word, or a fingerspelled word.
+ */
+function labelForUnit(unit) {
+
+    if (unit.type === "fingerspell") {
+        return `${unit.phrase} (fingerspelled)`;
+    }
+
+    if (unit.type === "unmapped") {
+        return `${unit.phrase} — no sign yet`;
+    }
+
+    return unit.phrase;
+}
+
+
+/* Applies a dimmed, italic style to queue items for words that
+   have no FSL representation yet, so the gap reads as a known
+   vocabulary limit rather than a rendering glitch. */
+function styleQueueItem(item, unit) {
+
+    if (unit.type === "unmapped") {
+        item.style.opacity = "0.55";
+        item.style.fontStyle = "italic";
     }
 
 }
@@ -324,19 +370,65 @@ function initializeFSLPlayer() {
         true;
 
 
-    // Move to the next phrase
+    // Move to the next unit / next fingerspelled letter
     mainVideo.addEventListener(
         "ended",
-        () => {
-
-            const nextIndex =
-                fslPlaybackState.currentIndex +
-                1;
-
-            playPhrase(nextIndex);
-
-        }
+        handleVideoEnded
     );
+
+}
+
+
+function handleVideoEnded() {
+
+    /*
+     * If we're mid-fingerspelling, advance to the next letter
+     * instead of the next queue item.
+     */
+    if (
+        fslPlaybackState.fingerspellLetters &&
+        fslPlaybackState.fingerspellIndex + 1 <
+            fslPlaybackState.fingerspellLetters.length
+    ) {
+
+        playFingerspellLetter(
+            fslPlaybackState.fingerspellIndex + 1
+        );
+
+        return;
+    }
+
+    fslPlaybackState.fingerspellLetters = null;
+    fslPlaybackState.fingerspellIndex = -1;
+
+    const nextIndex =
+        fslPlaybackState.currentIndex + 1;
+
+    playPhrase(nextIndex);
+
+}
+
+
+function playFingerspellLetter(letterIndex) {
+
+    const mainVideo = fslPlaybackState.mainVideo;
+    const letters = fslPlaybackState.fingerspellLetters;
+
+    if (!mainVideo || !letters || !letters[letterIndex]) {
+        return;
+    }
+
+    fslPlaybackState.fingerspellIndex = letterIndex;
+
+    mainVideo.src = letters[letterIndex].video;
+    mainVideo.load();
+
+    mainVideo.play().catch(error => {
+        console.error(
+            "Unable to play fingerspelling letter:",
+            error
+        );
+    });
 
 }
 
@@ -361,7 +453,7 @@ function playPhrase(index) {
     }
 
 
-    // No more phrases
+    // No more units
     if (
         index >= phraseMatches.length
     ) {
@@ -376,30 +468,8 @@ function playPhrase(index) {
     }
 
 
-    const phraseMatch =
+    const unit =
         phraseMatches[index];
-
-
-    const videoData =
-        getFSLVideo(
-            phraseMatch.dataset_id
-        );
-
-
-    // Skip phrases without videos
-    if (!videoData) {
-
-        if (queueItems[index]) {
-
-            queueItems[index].textContent =
-                `${index + 1}. ${phraseMatch.phrase} — Video unavailable`;
-
-        }
-
-        playPhrase(index + 1);
-
-        return;
-    }
 
 
     fslPlaybackState.currentIndex =
@@ -408,7 +478,7 @@ function playPhrase(index) {
 
     // Current phrase
     currentPhrase.textContent =
-        `▶ ${phraseMatch.phrase}`;
+        `▶ ${labelForUnit(unit)}`;
 
 
     // Update queue
@@ -418,19 +488,19 @@ function playPhrase(index) {
             if (itemIndex < index) {
 
                 item.textContent =
-                    `✓ ${itemIndex + 1}. ${phraseMatches[itemIndex].phrase}`;
+                    `✓ ${itemIndex + 1}. ${labelForUnit(phraseMatches[itemIndex])}`;
 
             } else if (
                 itemIndex === index
             ) {
 
                 item.textContent =
-                    `▶ ${itemIndex + 1}. ${phraseMatches[itemIndex].phrase}`;
+                    `▶ ${itemIndex + 1}. ${labelForUnit(phraseMatches[itemIndex])}`;
 
             } else {
 
                 item.textContent =
-                    `○ ${itemIndex + 1}. ${phraseMatches[itemIndex].phrase}`;
+                    `○ ${itemIndex + 1}. ${labelForUnit(phraseMatches[itemIndex])}`;
 
             }
 
@@ -449,9 +519,49 @@ function playPhrase(index) {
     }
 
 
+    /*
+     * Fingerspelled words: play each letter clip in order,
+     * then fall through to the next unit via handleVideoEnded.
+     */
+    if (unit.type === "fingerspell") {
+
+        fslPlaybackState.fingerspellLetters =
+            unit.letters;
+
+        playFingerspellLetter(0);
+
+        return;
+    }
+
+
+    fslPlaybackState.fingerspellLetters = null;
+    fslPlaybackState.fingerspellIndex = -1;
+
+
+    // Skip units without a resolved video (phrase or word alike)
+    if (!unit.video) {
+
+        if (queueItems[index]) {
+
+            const reason =
+                unit.type === "unmapped"
+                    ? "no sign yet"
+                    : "video unavailable";
+
+            queueItems[index].textContent =
+                `${index + 1}. ${unit.phrase} — ${reason}`;
+
+        }
+
+        playPhrase(index + 1);
+
+        return;
+    }
+
+
     // Change video
     mainVideo.src =
-        videoData.video;
+        unit.video;
 
     mainVideo.load();
 
@@ -546,6 +656,11 @@ function startSpeechRecognition() {
 
     recognition.onresult = (event) => {
 
+        /* Timestamp captured at the moment audio produced a
+           result, for latency = t_output - t_input (Eq. 3.3). */
+        const inputTimestamp =
+            performance.now();
+
         let interimTranscript = "";
         let newFinalTranscript = "";
 
@@ -590,6 +705,35 @@ function startSpeechRecognition() {
                     .replace(/\s+/g, " ")
                     .trim();
 
+            /*
+             * Cap the transcript so translation cost stays
+             * bounded during long sessions. Trim on a word
+             * boundary so we never cut a phrase mid-word.
+             */
+            if (
+                accumulatedFinalTranscript.length >
+                    MAX_TRANSCRIPT_CHARS
+            ) {
+
+                const overflow =
+                    accumulatedFinalTranscript.length -
+                    MAX_TRANSCRIPT_CHARS;
+
+                const cutPoint =
+                    accumulatedFinalTranscript.indexOf(
+                        " ",
+                        overflow
+                    );
+
+                accumulatedFinalTranscript =
+                    cutPoint === -1
+                        ? accumulatedFinalTranscript
+                        : accumulatedFinalTranscript.slice(
+                            cutPoint + 1
+                        );
+
+            }
+
         }
 
 
@@ -619,122 +763,133 @@ function startSpeechRecognition() {
         }
 
 
-        // Only translate finalized speech
-        if (
-            accumulatedFinalTranscript
-        ) {
+        /*
+         * Only re-run translation when new speech was finalized.
+         * Re-matching against every interim result (several times
+         * per second) is unnecessary work and was the main cost
+         * driver in the previous version.
+         */
+        if (!newFinalTranscript) {
+            return;
+        }
 
-            const phraseMatches =
-                findPhraseMappings(
-                    accumulatedFinalTranscript
-                );
+        if (!accumulatedFinalTranscript) {
+            return;
+        }
 
-
-            const processedTextElement =
-                document.getElementById(
-                    "processed-text"
-                );
-
-
-            const translationDetails =
-                document.getElementById(
-                    "translation-details"
-                );
+        const sequence =
+            buildFSLSequence(
+                accumulatedFinalTranscript
+            );
 
 
-            if (
-                phraseMatches.length > 0
-            ) {
-
-                // Display all recognized phrases
-                if (
-                    processedTextElement
-                ) {
-
-                    processedTextElement.textContent =
-                        phraseMatches
-                            .map(
-                                match =>
-                                    match.phrase
-                            )
-                            .join(" + ");
-
-                }
+        const processedTextElement =
+            document.getElementById(
+                "processed-text"
+            );
 
 
-                // Update persistent FSL queue
-                updateFSLTranslation(
-                    phraseMatches
-                );
+        const translationDetails =
+            document.getElementById(
+                "translation-details"
+            );
 
 
-                // Display translation details
-                if (
-                    translationDetails
-                ) {
+        if (sequence.length > 0) {
 
-                    translationDetails.innerHTML =
-                        phraseMatches
-                            .map(
-                                (
-                                    phraseMatch,
-                                    index
-                                ) => {
+            // Display all recognized units
+            if (processedTextElement) {
 
-                                    return `
-                                        <div style="margin-bottom: 10px;">
-                                            <p>
-                                                <strong>
-                                                    ✓ Phrase ${index + 1}
-                                                </strong>
-                                            </p>
-
-                                            <p>
-                                                Input:
-                                                ${phraseMatch.phrase}
-                                            </p>
-
-                                            <p>
-                                                FSL-105 Label:
-                                                ${phraseMatch.dataset_label}
-                                            </p>
-
-                                            <p>
-                                                Dataset ID:
-                                                ${phraseMatch.dataset_id}
-                                            </p>
-
-                                            <p>
-                                                Category:
-                                                ${phraseMatch.category}
-                                            </p>
-
-                                            <p>
-                                                Source:
-                                                ${phraseMatch.source}
-                                            </p>
-                                        </div>
-                                    `;
-
-                                }
-                            )
-                            .join("");
-
-                }
-
-
-                console.log(
-                    "Accumulated Speech:",
-                    accumulatedFinalTranscript
-                );
-
-
-                console.log(
-                    "Phrase Matches:",
-                    phraseMatches
-                );
+                processedTextElement.textContent =
+                    sequence
+                        .map(unit => labelForUnit(unit))
+                        .join(" + ");
 
             }
+
+
+            // Update persistent FSL queue
+            updateFSLTranslation(sequence);
+
+
+            // Display translation details
+            if (translationDetails) {
+
+                translationDetails.innerHTML =
+                    sequence
+                        .map((unit, index) => {
+
+                            return `
+                                <div style="margin-bottom: 10px;">
+                                    <p>
+                                        <strong>
+                                            ✓ Unit ${index + 1}
+                                            (${unit.type})
+                                        </strong>
+                                    </p>
+
+                                    <p>
+                                        Input:
+                                        ${unit.phrase}
+                                    </p>
+
+                                    <p>
+                                        FSL Label:
+                                        ${unit.dataset_label}
+                                    </p>
+
+                                    <p>
+                                        Dataset ID:
+                                        ${
+                                            unit.dataset_id ??
+                                            "—"
+                                        }
+                                    </p>
+
+                                    <p>
+                                        Category:
+                                        ${unit.category}
+                                    </p>
+
+                                    <p>
+                                        Source:
+                                        ${unit.source ?? "—"}
+                                    </p>
+                                </div>
+                            `;
+
+                        })
+                        .join("");
+
+            }
+
+
+            /*
+             * Rough latency sample: time between this result
+             * arriving and the sequence being built. The main
+             * video's actual play() start is a separate, later
+             * sample if you want to measure full pipeline latency.
+             */
+            const outputTimestamp = performance.now();
+
+            console.log(
+                "ASR-to-sequence latency (ms):",
+                Math.round(
+                    outputTimestamp - inputTimestamp
+                )
+            );
+
+
+            console.log(
+                "Accumulated Speech:",
+                accumulatedFinalTranscript
+            );
+
+
+            console.log(
+                "FSL Sequence:",
+                sequence
+            );
 
         }
 
@@ -837,9 +992,23 @@ function stopSpeechRecognition() {
 }
 
 
-function updateFSLTranslation(phraseMatches) {
+/*
+ * A stable identity for a queue unit. Works for phrase matches,
+ * dictionary words, and fingerspelled words alike, since all of
+ * them carry position/phrase/dataset_id from buildFSLSequence().
+ */
+function createUnitKey(unit) {
+    return (
+        `${unit.position}|` +
+        `${unit.phrase}|` +
+        `${unit.dataset_id}`
+    );
+}
 
-    if (!phraseMatches || phraseMatches.length === 0) {
+
+function updateFSLTranslation(sequence) {
+
+    if (!sequence || sequence.length === 0) {
         return;
     }
 
@@ -855,32 +1024,15 @@ function updateFSLTranslation(phraseMatches) {
         return;
     }
 
-    /*
-     * Create a unique key for every phrase.
-     *
-     * The position is important because the same phrase
-     * can legitimately appear more than once.
-     */
-    const createPhraseKey = (phraseMatch) => {
-        return (
-            `${phraseMatch.position}|` +
-            `${phraseMatch.phrase}|` +
-            `${phraseMatch.dataset_id}`
-        );
-    };
-
-    /*
-     * Build the latest phrase list.
-     */
-    const latestMatches = phraseMatches.map(
-        (phraseMatch) => ({
-            ...phraseMatch,
-            key: createPhraseKey(phraseMatch)
+    const latestMatches = sequence.map(
+        (unit) => ({
+            ...unit,
+            key: createUnitKey(unit)
         })
     );
 
     /*
-     * If there are no existing phrases,
+     * If there are no existing units,
      * initialize the queue normally.
      */
     if (fslPlaybackState.phraseMatches.length === 0) {
@@ -890,25 +1042,27 @@ function updateFSLTranslation(phraseMatches) {
 
         fslPlaybackState.phraseKeys =
             latestMatches.map(
-                match => match.key
+                unit => unit.key
             );
 
         phraseQueue.innerHTML = "";
         fslPlaybackState.queueItems = [];
 
         latestMatches.forEach(
-            (phraseMatch, index) => {
+            (unit, index) => {
 
                 const item =
                     document.createElement("div");
 
                 item.textContent =
-                    `${index + 1}. ${phraseMatch.phrase}`;
+                    `${index + 1}. ${labelForUnit(unit)}`;
 
                 item.style.padding = "8px";
                 item.style.borderRadius = "5px";
                 item.style.marginBottom = "3px";
                 item.style.fontSize = "14px";
+
+                styleQueueItem(item, unit);
 
                 phraseQueue.appendChild(item);
 
@@ -928,25 +1082,21 @@ function updateFSLTranslation(phraseMatches) {
 
     /*
      * Check whether the current queue still matches
-     * the latest phrase detection.
+     * the latest translation.
      */
     const currentMatches =
         fslPlaybackState.phraseMatches;
 
     const currentKeys =
         currentMatches.map(
-            match => createPhraseKey(match)
+            unit => createUnitKey(unit)
         );
 
     const latestKeys =
         latestMatches.map(
-            match => match.key
+            unit => unit.key
         );
 
-    /*
-     * Detect whether the latest recognition result
-     * changed the already-detected phrase sequence.
-     */
     let sequenceChanged =
         currentKeys.length !== latestKeys.length;
 
@@ -969,57 +1119,49 @@ function updateFSLTranslation(phraseMatches) {
         }
     }
 
-    /*
-     * If nothing changed, there is nothing to update.
-     */
     if (!sequenceChanged) {
         return;
     }
 
     /*
-     * Preserve the phrase currently being played.
+     * Preserve the unit currently being played.
      */
-    const currentPhraseKey =
+    const currentUnitKey =
         fslPlaybackState.currentIndex >= 0 &&
         fslPlaybackState.currentIndex <
             currentMatches.length
-            ? createPhraseKey(
+            ? createUnitKey(
                 currentMatches[
                     fslPlaybackState.currentIndex
                 ]
             )
             : null;
 
-    /*
-     * Replace the stored phrase sequence
-     * with the latest, non-overlapping result.
-     */
     fslPlaybackState.phraseMatches =
         latestMatches;
 
     fslPlaybackState.phraseKeys =
         latestKeys;
 
-    /*
-     * Rebuild the visible queue.
-     */
     phraseQueue.innerHTML = "";
 
     fslPlaybackState.queueItems = [];
 
     latestMatches.forEach(
-        (phraseMatch, index) => {
+        (unit, index) => {
 
             const item =
                 document.createElement("div");
 
             item.textContent =
-                `${index + 1}. ${phraseMatch.phrase}`;
+                `${index + 1}. ${labelForUnit(unit)}`;
 
             item.style.padding = "8px";
             item.style.borderRadius = "5px";
             item.style.marginBottom = "3px";
             item.style.fontSize = "14px";
+
+            styleQueueItem(item, unit);
 
             phraseQueue.appendChild(item);
 
@@ -1029,30 +1171,23 @@ function updateFSLTranslation(phraseMatches) {
         }
     );
 
-    /*
-     * Try to find the phrase that was already playing.
-     */
     let preservedIndex = -1;
 
-    if (currentPhraseKey) {
+    if (currentUnitKey) {
 
         preservedIndex =
             latestKeys.indexOf(
-                currentPhraseKey
+                currentUnitKey
             );
     }
 
-    /*
-     * If the currently playing phrase still exists,
-     * keep that phrase as the current video.
-     */
     if (preservedIndex >= 0) {
 
         fslPlaybackState.currentIndex =
             preservedIndex;
 
         latestMatches.forEach(
-            (phraseMatch, index) => {
+            (unit, index) => {
 
                 if (
                     fslPlaybackState.queueItems[
@@ -1066,7 +1201,7 @@ function updateFSLTranslation(phraseMatches) {
                             index
                         ].textContent =
                             `✓ ${index + 1}. ` +
-                            `${phraseMatch.phrase}`;
+                            `${labelForUnit(unit)}`;
 
                     } else if (
                         index === preservedIndex
@@ -1076,7 +1211,7 @@ function updateFSLTranslation(phraseMatches) {
                             index
                         ].textContent =
                             `▶ ${index + 1}. ` +
-                            `${phraseMatch.phrase}`;
+                            `${labelForUnit(unit)}`;
 
                     } else {
 
@@ -1084,17 +1219,12 @@ function updateFSLTranslation(phraseMatches) {
                             index
                         ].textContent =
                             `○ ${index + 1}. ` +
-                            `${phraseMatch.phrase}`;
+                            `${labelForUnit(unit)}`;
                     }
                 }
             }
         );
 
-        /*
-        * If the current video has already finished
-        * and a new phrase was added, continue with
-        * the next phrase automatically.
-        */
         if (
             mainVideo.ended &&
             preservedIndex + 1 <
@@ -1109,10 +1239,6 @@ function updateFSLTranslation(phraseMatches) {
         return;
     }
 
-    /*
-     * If the previous phrase no longer exists,
-     * start from the first available phrase.
-     */
     if (
         mainVideo.paused ||
         mainVideo.ended
