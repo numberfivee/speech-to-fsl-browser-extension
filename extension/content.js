@@ -837,141 +837,287 @@ function stopSpeechRecognition() {
 }
 
 
-function updateFSLTranslation(
-    phraseMatches
-) {
+function updateFSLTranslation(phraseMatches) {
 
-    if (
-        !phraseMatches ||
-        phraseMatches.length === 0
-    ) {
+    if (!phraseMatches || phraseMatches.length === 0) {
         return;
     }
-
 
     initializeFSLPlayer();
 
-
-    // Find only NEW phrase matches
-    const newMatches = [];
-
-
-    phraseMatches.forEach(
-        (phraseMatch) => {
-
-            const key =
-                `${phraseMatch.position}|` +
-                `${phraseMatch.phrase}|` +
-                `${phraseMatch.dataset_id}`;
-
-
-            if (
-                !fslPlaybackState.phraseKeys.includes(
-                    key
-                )
-            ) {
-
-                fslPlaybackState.phraseKeys.push(
-                    key
-                );
-
-                newMatches.push(
-                    phraseMatch
-                );
-
-            }
-
-        }
-    );
-
-
-    if (newMatches.length === 0) {
-
-        return;
-
-    }
-
-
-    // Add new phrases to existing queue
-    fslPlaybackState.phraseMatches.push(
-        ...newMatches
-    );
-
+    const mainVideo =
+        fslPlaybackState.mainVideo;
 
     const phraseQueue =
         fslPlaybackState.phraseQueue;
 
+    if (!mainVideo || !phraseQueue) {
+        return;
+    }
 
-    // Create queue items only for new phrases
-    newMatches.forEach(
-        (phraseMatch) => {
+    /*
+     * Create a unique key for every phrase.
+     *
+     * The position is important because the same phrase
+     * can legitimately appear more than once.
+     */
+    const createPhraseKey = (phraseMatch) => {
+        return (
+            `${phraseMatch.position}|` +
+            `${phraseMatch.phrase}|` +
+            `${phraseMatch.dataset_id}`
+        );
+    };
 
-            const index =
-                fslPlaybackState.queueItems.length;
+    /*
+     * Build the latest phrase list.
+     */
+    const latestMatches = phraseMatches.map(
+        (phraseMatch) => ({
+            ...phraseMatch,
+            key: createPhraseKey(phraseMatch)
+        })
+    );
 
+    /*
+     * If there are no existing phrases,
+     * initialize the queue normally.
+     */
+    if (fslPlaybackState.phraseMatches.length === 0) {
+
+        fslPlaybackState.phraseMatches =
+            latestMatches;
+
+        fslPlaybackState.phraseKeys =
+            latestMatches.map(
+                match => match.key
+            );
+
+        phraseQueue.innerHTML = "";
+        fslPlaybackState.queueItems = [];
+
+        latestMatches.forEach(
+            (phraseMatch, index) => {
+
+                const item =
+                    document.createElement("div");
+
+                item.textContent =
+                    `${index + 1}. ${phraseMatch.phrase}`;
+
+                item.style.padding = "8px";
+                item.style.borderRadius = "5px";
+                item.style.marginBottom = "3px";
+                item.style.fontSize = "14px";
+
+                phraseQueue.appendChild(item);
+
+                fslPlaybackState.queueItems.push(
+                    item
+                );
+            }
+        );
+
+        if (mainVideo.paused || mainVideo.ended) {
+
+            playPhrase(0);
+        }
+
+        return;
+    }
+
+    /*
+     * Check whether the current queue still matches
+     * the latest phrase detection.
+     */
+    const currentMatches =
+        fslPlaybackState.phraseMatches;
+
+    const currentKeys =
+        currentMatches.map(
+            match => createPhraseKey(match)
+        );
+
+    const latestKeys =
+        latestMatches.map(
+            match => match.key
+        );
+
+    /*
+     * Detect whether the latest recognition result
+     * changed the already-detected phrase sequence.
+     */
+    let sequenceChanged =
+        currentKeys.length !== latestKeys.length;
+
+    if (!sequenceChanged) {
+
+        for (
+            let i = 0;
+            i < currentKeys.length;
+            i++
+        ) {
+
+            if (
+                currentKeys[i] !==
+                latestKeys[i]
+            ) {
+
+                sequenceChanged = true;
+                break;
+            }
+        }
+    }
+
+    /*
+     * If nothing changed, there is nothing to update.
+     */
+    if (!sequenceChanged) {
+        return;
+    }
+
+    /*
+     * Preserve the phrase currently being played.
+     */
+    const currentPhraseKey =
+        fslPlaybackState.currentIndex >= 0 &&
+        fslPlaybackState.currentIndex <
+            currentMatches.length
+            ? createPhraseKey(
+                currentMatches[
+                    fslPlaybackState.currentIndex
+                ]
+            )
+            : null;
+
+    /*
+     * Replace the stored phrase sequence
+     * with the latest, non-overlapping result.
+     */
+    fslPlaybackState.phraseMatches =
+        latestMatches;
+
+    fslPlaybackState.phraseKeys =
+        latestKeys;
+
+    /*
+     * Rebuild the visible queue.
+     */
+    phraseQueue.innerHTML = "";
+
+    fslPlaybackState.queueItems = [];
+
+    latestMatches.forEach(
+        (phraseMatch, index) => {
 
             const item =
                 document.createElement("div");
 
-
             item.textContent =
                 `${index + 1}. ${phraseMatch.phrase}`;
 
+            item.style.padding = "8px";
+            item.style.borderRadius = "5px";
+            item.style.marginBottom = "3px";
+            item.style.fontSize = "14px";
 
-            item.style.padding =
-                "8px";
-
-            item.style.borderRadius =
-                "5px";
-
-            item.style.marginBottom =
-                "3px";
-
-            item.style.fontSize =
-                "14px";
-
-
-            phraseQueue.appendChild(
-                item
-            );
-
+            phraseQueue.appendChild(item);
 
             fslPlaybackState.queueItems.push(
                 item
             );
-
         }
     );
 
+    /*
+     * Try to find the phrase that was already playing.
+     */
+    let preservedIndex = -1;
 
-    // Start playback if nothing is currently playing
-    const mainVideo =
-        fslPlaybackState.mainVideo;
+    if (currentPhraseKey) {
 
+        preservedIndex =
+            latestKeys.indexOf(
+                currentPhraseKey
+            );
+    }
 
-    if (!mainVideo) {
+    /*
+     * If the currently playing phrase still exists,
+     * keep that phrase as the current video.
+     */
+    if (preservedIndex >= 0) {
+
+        fslPlaybackState.currentIndex =
+            preservedIndex;
+
+        latestMatches.forEach(
+            (phraseMatch, index) => {
+
+                if (
+                    fslPlaybackState.queueItems[
+                        index
+                    ]
+                ) {
+
+                    if (index < preservedIndex) {
+
+                        fslPlaybackState.queueItems[
+                            index
+                        ].textContent =
+                            `✓ ${index + 1}. ` +
+                            `${phraseMatch.phrase}`;
+
+                    } else if (
+                        index === preservedIndex
+                    ) {
+
+                        fslPlaybackState.queueItems[
+                            index
+                        ].textContent =
+                            `▶ ${index + 1}. ` +
+                            `${phraseMatch.phrase}`;
+
+                    } else {
+
+                        fslPlaybackState.queueItems[
+                            index
+                        ].textContent =
+                            `○ ${index + 1}. ` +
+                            `${phraseMatch.phrase}`;
+                    }
+                }
+            }
+        );
+
+        /*
+        * If the current video has already finished
+        * and a new phrase was added, continue with
+        * the next phrase automatically.
+        */
+        if (
+            mainVideo.ended &&
+            preservedIndex + 1 <
+                latestMatches.length
+        ) {
+
+            playPhrase(
+                preservedIndex + 1
+            );
+        }
+
         return;
     }
 
-
+    /*
+     * If the previous phrase no longer exists,
+     * start from the first available phrase.
+     */
     if (
         mainVideo.paused ||
         mainVideo.ended
     ) {
 
-        const nextIndex =
-            fslPlaybackState.currentIndex + 1;
-
-
-        if (
-            nextIndex <
-            fslPlaybackState.phraseMatches.length
-        ) {
-
-            playPhrase(nextIndex);
-
-        }
-
+        playPhrase(0);
     }
-
 }
