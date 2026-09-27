@@ -20,8 +20,10 @@
                 "dictionary.json",
                 "phrase_mappings.json",
                 "video_lookup.json",
+                "alphabet_lookup.json",
                 "assets/gifs/*",
-                "fsl_videos/*"
+                "fsl_videos/*",
+                "fsl_alphabet/*"
             ],
             "matches": [
                 "<all_urls>"
