@@ -73,32 +73,158 @@ let fslPlaybackState = {
     phraseKeys: [],
     currentIndex: -1,
     mainVideo: null,
+    letterImage: null,
+    letterCaption: null,
     currentPhrase: null,
     queueItems: [],
     initialized: false,
     /* fingerspelling sub-state */
     fingerspellLetters: null,
-    fingerspellIndex: -1
+    fingerspellIndex: -1,
+    fingerspellTimeoutId: null
 };
+
+/* Latency measurement (Eq. 3.3): timestamp of the most recent
+   finalized speech result, cleared once its first sign has
+   rendered. See recordLatencySample(). */
+let pendingLatencyInput = null;
+
+/* Accumulated samples for this session, exportable as CSV via
+   window.__fslExportSessionLog() (see bottom of file) or a
+   popup button wired to the same message. */
+let latencySamples = [];
 
 
 function resetTranslationState() {
 
     accumulatedFinalTranscript = "";
 
+    if (
+        fslPlaybackState &&
+        fslPlaybackState.fingerspellTimeoutId
+    ) {
+        clearTimeout(
+            fslPlaybackState.fingerspellTimeoutId
+        );
+    }
+
     fslPlaybackState = {
         phraseMatches: [],
         phraseKeys: [],
         currentIndex: -1,
         mainVideo: null,
+        letterImage: null,
+        letterCaption: null,
         currentPhrase: null,
         queueItems: [],
         initialized: false,
         fingerspellLetters: null,
-        fingerspellIndex: -1
+        fingerspellIndex: -1,
+        fingerspellTimeoutId: null
     };
 
+    pendingLatencyInput = null;
+
 }
+
+
+/*
+ * Captures t_output (Eq. 3.3) the moment a sign actually renders
+ * on screen — either a video's 'playing' event, or the first
+ * frame of a fingerspelled word. Pairs it with the most recent
+ * t_input (when that speech was finalized) and stores one sample.
+ *
+ * Deliberately coarse: it measures "time from finalized speech to
+ * the first sign of that utterance appearing," not per-word
+ * latency. That matches how Eq. 3.3 is defined in the methodology
+ * (system latency, not per-token latency) and avoids needing to
+ * disambiguate which ASR result produced which specific queue item.
+ */
+function recordLatencySample() {
+
+    if (!pendingLatencyInput) {
+        return;
+    }
+
+    const outputTimestamp = performance.now();
+
+    const latencyMs = Math.round(
+        outputTimestamp - pendingLatencyInput.timestamp
+    );
+
+    latencySamples.push({
+        timestamp: new Date().toISOString(),
+        transcript: pendingLatencyInput.transcript,
+        latency_ms: latencyMs
+    });
+
+    console.log(
+        "Latency sample (ms):",
+        latencyMs,
+        "for:",
+        pendingLatencyInput.transcript
+    );
+
+    // Each ASR result should only be credited with one sample.
+    pendingLatencyInput = null;
+
+}
+
+
+/*
+ * Exports accumulated latency samples as a CSV download. Call
+ * from the DevTools console during testing (window.__fslExportSessionLog()),
+ * or wire a button in popup.js that sends a message this content
+ * script listens for.
+ */
+function exportSessionLog() {
+
+    if (latencySamples.length === 0) {
+        console.warn("No latency samples recorded yet.");
+        return;
+    }
+
+    const header = "timestamp,transcript,latency_ms\n";
+
+    const rows = latencySamples
+        .map(sample => {
+
+            // Escape quotes/commas in the transcript for CSV safety.
+            const safeTranscript =
+                `"${sample.transcript.replace(/"/g, '""')}"`;
+
+            return `${sample.timestamp},${safeTranscript},${sample.latency_ms}`;
+
+        })
+        .join("\n");
+
+    const csvContent = header + rows;
+
+    const blob = new Blob(
+        [csvContent],
+        { type: "text/csv" }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download =
+        `fsl_latency_log_${Date.now()}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+    console.log(
+        `Exported ${latencySamples.length} latency samples.`
+    );
+
+}
+
+window.__fslExportSessionLog = exportSessionLog;
 
 
 function createTranslatorWidget() {
@@ -296,6 +422,46 @@ function initializeFSLPlayer() {
     );
 
 
+    /*
+     * Fingerspelling display. The FSL alphabet dataset is IMAGES,
+     * not video, so letters render here instead of in mainVideo.
+     * Only one of the two is visible at a time.
+     */
+    const letterImage =
+        document.createElement("img");
+
+    letterImage.style.display = "none";
+    letterImage.style.width = "100%";
+    letterImage.style.maxWidth = "400px";
+    letterImage.style.height = "auto";
+    letterImage.style.maxHeight = "300px";
+    letterImage.style.objectFit = "contain";
+    letterImage.style.boxSizing = "border-box";
+    letterImage.style.borderRadius = "10px";
+    letterImage.style.margin =
+        "0 auto 10px auto";
+
+    animationElement.appendChild(
+        letterImage
+    );
+
+
+    // Caption under the fingerspelling image, e.g. "A - K - O"
+    const letterCaption =
+        document.createElement("div");
+
+    letterCaption.style.display = "none";
+    letterCaption.style.textAlign = "center";
+    letterCaption.style.fontSize = "13px";
+    letterCaption.style.letterSpacing = "2px";
+    letterCaption.style.marginBottom = "8px";
+    letterCaption.style.color = "#555";
+
+    animationElement.appendChild(
+        letterCaption
+    );
+
+
     // Current phrase
     const currentPhrase =
         document.createElement("div");
@@ -360,6 +526,12 @@ function initializeFSLPlayer() {
     fslPlaybackState.mainVideo =
         mainVideo;
 
+    fslPlaybackState.letterImage =
+        letterImage;
+
+    fslPlaybackState.letterCaption =
+        letterCaption;
+
     fslPlaybackState.currentPhrase =
         currentPhrase;
 
@@ -376,31 +548,21 @@ function initializeFSLPlayer() {
         handleVideoEnded
     );
 
+    /* Latency sample point: Eq. 3.3, t_output. Fires the moment
+       a sign actually starts rendering on screen. */
+    mainVideo.addEventListener(
+        "playing",
+        recordLatencySample
+    );
+
 }
 
 
 function handleVideoEnded() {
 
-    /*
-     * If we're mid-fingerspelling, advance to the next letter
-     * instead of the next queue item.
-     */
-    if (
-        fslPlaybackState.fingerspellLetters &&
-        fslPlaybackState.fingerspellIndex + 1 <
-            fslPlaybackState.fingerspellLetters.length
-    ) {
-
-        playFingerspellLetter(
-            fslPlaybackState.fingerspellIndex + 1
-        );
-
-        return;
-    }
-
-    fslPlaybackState.fingerspellLetters = null;
-    fslPlaybackState.fingerspellIndex = -1;
-
+    /* Fingerspelling now advances on its own timer (images have
+       no 'ended' event), so this handler only ever fires for
+       real sign videos. */
     const nextIndex =
         fslPlaybackState.currentIndex + 1;
 
@@ -409,26 +571,61 @@ function handleVideoEnded() {
 }
 
 
+/* How long each fingerspelled letter is shown on screen. */
+const FINGERSPELL_LETTER_MS = 650;
+
+
 function playFingerspellLetter(letterIndex) {
 
-    const mainVideo = fslPlaybackState.mainVideo;
+    const letterImage = fslPlaybackState.letterImage;
+    const letterCaption = fslPlaybackState.letterCaption;
     const letters = fslPlaybackState.fingerspellLetters;
 
-    if (!mainVideo || !letters || !letters[letterIndex]) {
+    if (!letterImage || !letters || !letters[letterIndex]) {
         return;
     }
 
     fslPlaybackState.fingerspellIndex = letterIndex;
 
-    mainVideo.src = letters[letterIndex].video;
-    mainVideo.load();
+    letterImage.src = letters[letterIndex].image;
 
-    mainVideo.play().catch(error => {
-        console.error(
-            "Unable to play fingerspelling letter:",
-            error
-        );
-    });
+    letterCaption.textContent =
+        letters
+            .map((entry, i) =>
+                i === letterIndex
+                    ? entry.letter.toUpperCase()
+                    : entry.letter.toLowerCase()
+            )
+            .join(" - ");
+
+    /* First letter of a fingerspelled word is the latency
+       sample point for this unit, mirroring the 'playing'
+       event used for real sign videos. */
+    if (letterIndex === 0) {
+        recordLatencySample();
+    }
+
+    if (fslPlaybackState.fingerspellTimeoutId) {
+        clearTimeout(fslPlaybackState.fingerspellTimeoutId);
+    }
+
+    fslPlaybackState.fingerspellTimeoutId = setTimeout(() => {
+
+        const nextLetterIndex = letterIndex + 1;
+
+        if (nextLetterIndex < letters.length) {
+            playFingerspellLetter(nextLetterIndex);
+            return;
+        }
+
+        // Fingerspelled word finished; resume the normal queue.
+        fslPlaybackState.fingerspellLetters = null;
+        fslPlaybackState.fingerspellIndex = -1;
+        fslPlaybackState.fingerspellTimeoutId = null;
+
+        playPhrase(fslPlaybackState.currentIndex + 1);
+
+    }, FINGERSPELL_LETTER_MS);
 
 }
 
@@ -520,10 +717,17 @@ function playPhrase(index) {
 
 
     /*
-     * Fingerspelled words: play each letter clip in order,
-     * then fall through to the next unit via handleVideoEnded.
+     * Fingerspelled words: display each letter image in order,
+     * then fall through to the next unit automatically once the
+     * fingerspelling timer finishes.
      */
     if (unit.type === "fingerspell") {
+
+        mainVideo.pause();
+        mainVideo.style.display = "none";
+
+        fslPlaybackState.letterImage.style.display = "block";
+        fslPlaybackState.letterCaption.style.display = "block";
 
         fslPlaybackState.fingerspellLetters =
             unit.letters;
@@ -533,6 +737,16 @@ function playPhrase(index) {
         return;
     }
 
+
+    // Returning to a real sign video: hide the letter display
+    fslPlaybackState.letterImage.style.display = "none";
+    fslPlaybackState.letterCaption.style.display = "none";
+    mainVideo.style.display = "block";
+
+    if (fslPlaybackState.fingerspellTimeoutId) {
+        clearTimeout(fslPlaybackState.fingerspellTimeoutId);
+        fslPlaybackState.fingerspellTimeoutId = null;
+    }
 
     fslPlaybackState.fingerspellLetters = null;
     fslPlaybackState.fingerspellIndex = -1;
@@ -865,19 +1079,16 @@ function startSpeechRecognition() {
 
 
             /*
-             * Rough latency sample: time between this result
-             * arriving and the sequence being built. The main
-             * video's actual play() start is a separate, later
-             * sample if you want to measure full pipeline latency.
+             * t_input for Eq. 3.3. t_output is captured
+             * separately in recordLatencySample(), fired when
+             * the corresponding sign (video 'playing', or the
+             * first fingerspelled letter) actually reaches the
+             * screen — not merely when the sequence was computed.
              */
-            const outputTimestamp = performance.now();
-
-            console.log(
-                "ASR-to-sequence latency (ms):",
-                Math.round(
-                    outputTimestamp - inputTimestamp
-                )
-            );
+            pendingLatencyInput = {
+                timestamp: inputTimestamp,
+                transcript: accumulatedFinalTranscript
+            };
 
 
             console.log(

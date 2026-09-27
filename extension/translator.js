@@ -342,29 +342,10 @@ function resolveGloss(token) {
 
     const entry = fslDictionary[token.surface];
 
-    /*
-     * Dictionary entries in this project carry their OWN asset
-     * (a GIF under assets/gifs/), not a video_lookup.json
-     * dataset_id. Resolve directly to a playable URL here so
-     * content.js never needs to know the difference between a
-     * dictionary word and an FSL-105 phrase match.
-     */
-    if (entry && entry.animation) {
-        return {
-            type: "sign",
-            phrase: token.surface,
-            position: token.position,
-            end: token.position + token.surface.length,
-            dataset_label: entry.dataset_label || token.gloss,
-            dataset_id: entry.dataset_id ?? null,
-            video: chrome.runtime.getURL(entry.animation),
-            category: entry.category || "WORD",
-            source: entry.source || "dictionary"
-        };
-    }
-
-    /* Supports a future dictionary shape that points into
-       video_lookup.json by dataset_id instead of its own asset. */
+    /* dictionary.json entries point into video_lookup.json by
+       dataset_id — the same FSL-105 asset system phrase mappings
+       use, so word-level and phrase-level signs resolve the same
+       way. */
     if (entry && entry.dataset_id !== undefined) {
 
         const videoData = getFSLVideo(entry.dataset_id);
@@ -396,10 +377,12 @@ function resolveGloss(token) {
             dataset_label: token.gloss,
             dataset_id: null,
             /* resolved to full extension URLs now, so playback
-               needs no further lookups */
+               needs no further lookups. These are STILL IMAGES
+               (the FSL alphabet dataset is image-based), not
+               video, so content.js renders them differently. */
             letters: chars.map(c => ({
                 letter: c,
-                video: chrome.runtime.getURL(alphabetLookup[c])
+                image: chrome.runtime.getURL(alphabetLookup[c])
             })),
             category: "FINGERSPELL",
             source: "FSL-alphabet"
